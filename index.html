@@ -7,7 +7,7 @@
   <title>GEC | Trung tâm Tiếng Anh Kính Lỏng + AI + Gist</title>
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <style>
-    /* ... toàn bộ CSS giữ nguyên từ phiên bản trước ... */
+    /* ... toàn bộ CSS giữ nguyên như phiên bản trước ... */
     :root {
       --primary: #0a1f5c;
       --secondary: #f0b90b;
@@ -300,7 +300,7 @@
       </div>
       <div class="admin-card">
         <h3>🔐 Cấu hình hệ thống (API Key & Model)</h3>
-        <p style="font-size:0.85rem; opacity:0.8;">Nhập API Key và Model. Nhấn "Lưu key tạm" để dùng ngay không cần Gist.</p>
+        <p style="font-size:0.85rem; opacity:0.8;">Key tạm (local) luôn được ưu tiên. Nếu không có key tạm, sẽ dùng key từ Gist.</p>
         <label>OpenRouter API Key</label>
         <input type="text" id="newApiKey" placeholder="sk-or-v1-...">
         <div id="apiKeyStatus" class="key-status"></div>
@@ -309,9 +309,9 @@
         <button class="btn" onclick="saveApiKeyLocal()">💾 Lưu key AI tạm (dùng ngay)</button>
         <button class="btn" onclick="checkApiKey()">🔍 Kiểm tra API key</button>
         <button class="btn" onclick="saveSystemConfig()">☁️ Lưu lên Gist (nếu có token)</button>
+        <button class="btn" onclick="clearGistKey()" style="background:#ef4444;">🗑 Xóa key trong Gist</button>
         <label style="margin-top:12px;">Mật khẩu Admin mới</label>
         <input type="password" id="newAdminPassword" placeholder="Nhập mật khẩu mới (nếu muốn đổi)">
-        <button class="btn" onclick="saveSystemConfig()">Lưu tất cả lên Gist</button>
       </div>
       <button class="btn" onclick="logout()">Đăng xuất</button>
     </div>
@@ -382,12 +382,13 @@
     localStorage.setItem('gec_local_apikey', key);
   }
 
+  // 👉 THAY ĐỔI QUAN TRỌNG: Luôn ưu tiên key local (tạm) trước, sau đó mới đến key Gist
   function getEffectiveApiKey() {
-    const gistKey = currentConfig.systemConfig?.aiApiKey;
-    if (gistKey && gistKey !== 'YOUR_OPENROUTER_API_KEY') return gistKey;
     const localKey = getLocalApiKey();
-    if (localKey) return localKey;
-    return gistKey;
+    if (localKey) return localKey;                 // 1. Key tạm (mới nhất)
+    const gistKey = currentConfig.systemConfig?.aiApiKey;
+    if (gistKey && gistKey !== 'YOUR_OPENROUTER_API_KEY') return gistKey; // 2. Key từ Gist (nếu đã được cập nhật)
+    return gistKey; // 3. Mặc định (có thể là 'YOUR_OPENROUTER_API_KEY')
   }
 
   function maskKey(key) {
@@ -500,12 +501,19 @@
     const key = getEffectiveApiKey();
     const statusEl = document.getElementById('apiKeyStatus');
     if (!statusEl) return;
+    const localKey = getLocalApiKey();
+    const gistKey = currentConfig.systemConfig?.aiApiKey;
+    let source = '';
+    if (localKey && key === localKey) source = ' (tạm - local)';
+    else if (gistKey && key === gistKey) source = ' (từ Gist)';
+    else source = ' (mặc định)';
+
     if (!key || key === 'YOUR_OPENROUTER_API_KEY') {
       statusEl.className = 'key-status key-invalid';
-      statusEl.textContent = '❌ Chưa có key hợp lệ';
+      statusEl.textContent = `❌ Chưa có key hợp lệ${source}`;
     } else {
       statusEl.className = 'key-status key-valid';
-      statusEl.textContent = `✅ Key hiện tại: ${maskKey(key)}`;
+      statusEl.textContent = `✅ Key hiện tại: ${maskKey(key)}${source}`;
     }
   }
 
@@ -533,7 +541,7 @@
         headers: { 'Authorization': `token ${token}` }
       });
       if (res.ok) {
-        document.getElementById('gistStatus').innerHTML = '✅ Kết nối Gist thành công. Bạn có thể đồng bộ.';
+        document.getElementById('gistStatus').innerHTML = '✅ Kết nối Gist thành công.';
       } else {
         const err = await res.json();
         document.getElementById('gistStatus').innerHTML = `❌ Lỗi: ${err.message}`;
@@ -645,12 +653,12 @@
     try {
       await pushConfigToGist();
       applyConfig(currentConfig);
-      alert('Đã lưu cấu hình hệ thống. Trang sẽ tải lại để áp dụng.');
+      alert('Đã lưu cấu hình hệ thống lên Gist.');
       location.reload();
     } catch (e) {
       if (newApiKey && newApiKey !== 'YOUR_OPENROUTER_API_KEY') {
         setLocalApiKey(newApiKey);
-        alert('Không thể đồng bộ Gist. API key đã được lưu tạm trên trình duyệt. Chatbot sẽ dùng key này.');
+        alert('Không thể đồng bộ Gist. Key đã được lưu tạm và sẽ dùng ngay.');
       } else {
         alert('Lỗi: ' + e.message);
       }
@@ -664,9 +672,22 @@
       setLocalApiKey(apiKey);
       if (model) window.AI_MODEL = model;
       updateApiKeyStatus();
-      alert('Đã lưu API key tạm thời. Chatbot sẽ dùng key này ngay.');
+      alert('Đã lưu API key tạm. Chatbot sẽ dùng key này ngay lập tức.');
     } else {
       alert('Vui lòng nhập API key.');
+    }
+  }
+
+  async function clearGistKey() {
+    if (!confirm('Xóa key AI trong Gist? Sau đó chatbot sẽ dùng key tạm (nếu có) hoặc key mặc định.')) return;
+    currentConfig.systemConfig.aiApiKey = 'YOUR_OPENROUTER_API_KEY';
+    try {
+      await pushConfigToGist();
+      applyConfig(currentConfig);
+      loadAdminData();
+      alert('Đã xóa key trong Gist. Chatbot sẽ ưu tiên dùng key tạm.');
+    } catch (e) {
+      alert('Lỗi khi xóa key Gist: ' + e.message);
     }
   }
 
@@ -903,7 +924,7 @@
         let errorMsg = `❌ Lỗi API: ${data.error.message}`;
         if (data.error.message.includes('User not found')) {
           errorMsg += `\n\n👉 Key đang dùng: ${maskKey(apiKey)}`;
-          errorMsg += '\n\n👉 Vui lòng kiểm tra lại API key trong Admin (mục Cấu hình hệ thống) và nhấn "Kiểm tra API key".';
+          errorMsg += '\n\n👉 Nếu key này vừa được lưu tạm, hãy kiểm tra lại trong Admin. Nếu vẫn lỗi, hãy dùng nút "Xóa key trong Gist" để quay về key tạm.';
         } else if (data.error.message.includes('Insufficient credits')) {
           errorMsg += '\n\n👉 Tài khoản OpenRouter hết credit.';
         }
