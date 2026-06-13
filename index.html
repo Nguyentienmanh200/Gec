@@ -243,12 +243,14 @@
     <div id="adminContent" style="display:none;">
       <div class="admin-card">
         <h3>☁️ Cấu hình đồng bộ Gist</h3>
-        <p style="font-size:0.85rem; opacity:0.8;">Gist ID đã được cài sẵn. Nhập GitHub Token để bắt đầu đồng bộ.</p>
+        <p style="font-size:0.85rem; opacity:0.8;">Nhập GitHub Token để đồng bộ dữ liệu lên Gist của bạn.</p>
         <label>GitHub Token (quyền gist)</label>
         <input type="password" id="githubToken" placeholder="ghp_xxxx...">
         <button class="btn" onclick="saveGistConfig()">Lưu token & tải lại từ Gist</button>
         <button class="btn" onclick="checkGistConnection()" style="margin-left:4px;">🔍 Kiểm tra kết nối</button>
+        <button class="btn" onclick="viewGistContent()" style="margin-left:4px;">👁 Xem nội dung Gist</button>
         <div id="gistStatus" style="margin-top:8px; font-size:0.8rem;"></div>
+        <div id="gistContentPreview" style="margin-top:8px; background:#000; padding:8px; border-radius:8px; font-family:monospace; font-size:0.75rem; max-height:200px; overflow:auto; display:none;"></div>
       </div>
       <div class="admin-card">
         <h3>Quản lý bài viết</h3>
@@ -360,7 +362,6 @@
 
   let currentConfig = { ...DEFAULT_CONFIG };
 
-  // Quản lý token GitHub
   function getGithubToken() {
     return localStorage.getItem('gec_github_token') || '';
   }
@@ -368,7 +369,6 @@
     localStorage.setItem('gec_github_token', token);
   }
 
-  // Quản lý key AI tạm thời (fallback)
   function getLocalApiKey() {
     return localStorage.getItem('gec_local_apikey') || '';
   }
@@ -376,13 +376,12 @@
     localStorage.setItem('gec_local_apikey', key);
   }
 
-  // Hàm lấy API key thực tế (ưu tiên Gist, nếu có key thật; nếu không dùng local)
   function getEffectiveApiKey() {
     const gistKey = currentConfig.systemConfig?.aiApiKey;
     if (gistKey && gistKey !== 'YOUR_OPENROUTER_API_KEY') return gistKey;
     const localKey = getLocalApiKey();
     if (localKey) return localKey;
-    return gistKey; // trả về mặc định nếu không có gì
+    return gistKey;
   }
 
   async function loadConfigFromGist() {
@@ -417,14 +416,11 @@
     window.ADMIN_PASSWORD = cfg.systemConfig?.adminPassword || 'admin123';
     window.AI_MODEL = cfg.systemConfig?.aiModel || 'deepseek/deepseek-chat';
     window.telegramConfig = cfg.telegramConfig || { token: '', chatId: '' };
-    // API key sẽ được lấy qua getEffectiveApiKey() mỗi lần cần
   }
 
   async function pushConfigToGist() {
     const token = getGithubToken();
-    if (!token) {
-      throw new Error('Chưa có GitHub Token');
-    }
+    if (!token) throw new Error('Chưa có GitHub Token');
     const res = await fetch(GIST_API_URL, {
       method: 'PATCH',
       headers: {
@@ -518,6 +514,22 @@
       }
     } catch (e) {
       document.getElementById('gistStatus').innerHTML = '❌ Lỗi kết nối: ' + e.message;
+    }
+  }
+
+  async function viewGistContent() {
+    const token = document.getElementById('githubToken').value.trim();
+    if (!token) {
+      alert('Nhập token trước khi xem.');
+      return;
+    }
+    try {
+      const res = await fetch(GIST_RAW_URL);
+      const text = await res.text();
+      document.getElementById('gistContentPreview').style.display = 'block';
+      document.getElementById('gistContentPreview').textContent = text;
+    } catch (e) {
+      alert('Không thể tải nội dung Gist: ' + e.message);
     }
   }
 
@@ -615,7 +627,6 @@
       alert('Đã lưu cấu hình hệ thống. Trang sẽ tải lại để áp dụng.');
       location.reload();
     } catch (e) {
-      // Nếu không có token hoặc lỗi, lưu key tạm
       if (newApiKey && newApiKey !== 'YOUR_OPENROUTER_API_KEY') {
         setLocalApiKey(newApiKey);
         alert('Không thể đồng bộ Gist. API key đã được lưu tạm trên trình duyệt. Chatbot sẽ dùng key này.');
@@ -625,7 +636,6 @@
     }
   }
 
-  // Nút lưu key AI tạm (không cần Gist)
   function saveApiKeyLocal() {
     const apiKey = document.getElementById('newApiKey').value.trim();
     const model = document.getElementById('newAiModel').value.trim();
