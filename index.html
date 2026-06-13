@@ -7,7 +7,7 @@
   <title>GEC | Trung tâm Tiếng Anh Kính Lỏng + AI + Gist</title>
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <style>
-    /* ... toàn bộ CSS giữ nguyên từ code trước ... */
+    /* ... toàn bộ CSS giữ nguyên như phiên bản trước ... */
     :root {
       --primary: #0a1f5c;
       --secondary: #f0b90b;
@@ -243,10 +243,12 @@
     <div id="adminContent" style="display:none;">
       <div class="admin-card">
         <h3>☁️ Cấu hình đồng bộ Gist</h3>
-        <p style="font-size:0.85rem; opacity:0.8;">Gist ID đã được cài đặt sẵn. Chỉ cần nhập GitHub Token để bắt đầu đồng bộ.</p>
+        <p style="font-size:0.85rem; opacity:0.8;">Gist ID đã được cài sẵn. Nhập GitHub Token để bắt đầu đồng bộ.</p>
         <label>GitHub Token (quyền gist)</label>
         <input type="password" id="githubToken" placeholder="ghp_xxxx...">
         <button class="btn" onclick="saveGistConfig()">Lưu token & tải lại từ Gist</button>
+        <button class="btn" onclick="checkGistConnection()" style="margin-left:4px;">🔍 Kiểm tra kết nối</button>
+        <div id="gistStatus" style="margin-top:8px; font-size:0.8rem;"></div>
       </div>
       <div class="admin-card">
         <h3>Quản lý bài viết</h3>
@@ -292,15 +294,16 @@
         <button class="btn" onclick="saveTelegramConfig()">Lưu Telegram</button>
       </div>
       <div class="admin-card">
-        <h3>🔐 Cấu hình hệ thống</h3>
-        <p style="font-size:0.85rem; opacity:0.8;">Nhập trường muốn thay đổi, để trống để giữ nguyên.</p>
+        <h3>🔐 Cấu hình hệ thống (ưu tiên Gist, nếu Gist lỗi sẽ dùng key tạm)</h3>
+        <p style="font-size:0.85rem; opacity:0.8;">Nhập trường muốn thay đổi. Nếu Gist không được cấu hình, key sẽ được lưu tạm trên trình duyệt.</p>
         <label>Mật khẩu Admin mới</label>
         <input type="password" id="newAdminPassword" placeholder="Nhập mật khẩu mới (nếu muốn đổi)">
         <label>OpenRouter API Key</label>
         <input type="text" id="newApiKey" placeholder="sk-or-v1-...">
-        <label>Model AI (ví dụ: deepseek/deepseek-chat hoặc openai/gpt-3.5-turbo)</label>
+        <label>Model AI (ví dụ: deepseek/deepseek-chat)</label>
         <input type="text" id="newAiModel" placeholder="deepseek/deepseek-chat">
-        <button class="btn" onclick="saveSystemConfig()">Lưu cấu hình hệ thống</button>
+        <button class="btn" onclick="saveSystemConfig()">Lưu cấu hình (đồng bộ Gist nếu có)</button>
+        <button class="btn" onclick="saveApiKeyLocal()" style="background:#f59e0b;">💾 Lưu key AI tạm (không cần Gist)</button>
       </div>
       <button class="btn" onclick="logout()">Đăng xuất</button>
     </div>
@@ -357,11 +360,29 @@
 
   let currentConfig = { ...DEFAULT_CONFIG };
 
+  // Quản lý token GitHub
   function getGithubToken() {
     return localStorage.getItem('gec_github_token') || '';
   }
   function setGithubToken(token) {
     localStorage.setItem('gec_github_token', token);
+  }
+
+  // Quản lý key AI tạm thời (fallback)
+  function getLocalApiKey() {
+    return localStorage.getItem('gec_local_apikey') || '';
+  }
+  function setLocalApiKey(key) {
+    localStorage.setItem('gec_local_apikey', key);
+  }
+
+  // Hàm lấy API key thực tế (ưu tiên Gist, nếu có key thật; nếu không dùng local)
+  function getEffectiveApiKey() {
+    const gistKey = currentConfig.systemConfig?.aiApiKey;
+    if (gistKey && gistKey !== 'YOUR_OPENROUTER_API_KEY') return gistKey;
+    const localKey = getLocalApiKey();
+    if (localKey) return localKey;
+    return gistKey; // trả về mặc định nếu không có gì
   }
 
   async function loadConfigFromGist() {
@@ -394,41 +415,35 @@
     }
     window.botConfig = cfg.botConfig || DEFAULT_CONFIG.botConfig;
     window.ADMIN_PASSWORD = cfg.systemConfig?.adminPassword || 'admin123';
-    window.AI_API_KEY = cfg.systemConfig?.aiApiKey || 'YOUR_OPENROUTER_API_KEY';
     window.AI_MODEL = cfg.systemConfig?.aiModel || 'deepseek/deepseek-chat';
     window.telegramConfig = cfg.telegramConfig || { token: '', chatId: '' };
+    // API key sẽ được lấy qua getEffectiveApiKey() mỗi lần cần
   }
 
   async function pushConfigToGist() {
     const token = getGithubToken();
     if (!token) {
-      alert('Vui lòng nhập GitHub Token trong mục Cấu hình đồng bộ Gist.');
-      return false;
+      throw new Error('Chưa có GitHub Token');
     }
-    try {
-      const res = await fetch(GIST_API_URL, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `token ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          files: {
-            'config.json': {
-              content: JSON.stringify(currentConfig, null, 2)
-            }
+    const res = await fetch(GIST_API_URL, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        files: {
+          'config.json': {
+            content: JSON.stringify(currentConfig, null, 2)
           }
-        })
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || 'Lỗi cập nhật Gist');
-      }
-      return true;
-    } catch (e) {
-      alert('Lỗi đồng bộ Gist: ' + e.message);
-      return false;
+        }
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Lỗi cập nhật Gist');
     }
+    return true;
   }
 
   // ===== ADMIN =====
@@ -459,8 +474,8 @@
     document.getElementById('aiMaxTokens').value = currentConfig.botConfig?.maxTokens || 1024;
     document.getElementById('telegramToken').value = currentConfig.telegramConfig?.token || '';
     document.getElementById('telegramChatId').value = currentConfig.telegramConfig?.chatId || '';
-    document.getElementById('newApiKey').value = currentConfig.systemConfig?.aiApiKey || '';
-    document.getElementById('newAiModel').value = currentConfig.systemConfig?.aiModel || '';
+    document.getElementById('newApiKey').value = getEffectiveApiKey();
+    document.getElementById('newAiModel').value = window.AI_MODEL || '';
     document.getElementById('newAdminPassword').value = '';
     document.getElementById('githubToken').value = getGithubToken();
     const posts = currentConfig.posts || [];
@@ -472,14 +487,38 @@
     `).join('');
   }
 
-  function saveGistConfig() {
+  async function saveGistConfig() {
     const token = document.getElementById('githubToken').value.trim();
     if (!token) return alert('Vui lòng nhập GitHub Token');
     setGithubToken(token);
-    loadConfigFromGist().then(() => {
+    try {
+      await loadConfigFromGist();
       loadAdminData();
       alert('Đã lưu token và tải cấu hình từ Gist!');
-    });
+    } catch (e) {
+      alert('Lỗi: ' + e.message);
+    }
+  }
+
+  async function checkGistConnection() {
+    const token = document.getElementById('githubToken').value.trim();
+    if (!token) {
+      document.getElementById('gistStatus').innerHTML = '❌ Chưa nhập token.';
+      return;
+    }
+    try {
+      const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      if (res.ok) {
+        document.getElementById('gistStatus').innerHTML = '✅ Kết nối Gist thành công. Bạn có thể đồng bộ.';
+      } else {
+        const err = await res.json();
+        document.getElementById('gistStatus').innerHTML = `❌ Lỗi: ${err.message}`;
+      }
+    } catch (e) {
+      document.getElementById('gistStatus').innerHTML = '❌ Lỗi kết nối: ' + e.message;
+    }
   }
 
   async function saveSiteContent() {
@@ -492,9 +531,12 @@
     currentConfig.address = document.getElementById('editAddress').value;
     currentConfig.phone = document.getElementById('editPhone').value;
     currentConfig.email = document.getElementById('editEmail').value;
-    if (await pushConfigToGist()) {
+    try {
+      await pushConfigToGist();
       applyConfig(currentConfig);
       alert('Đã lưu và đồng bộ!');
+    } catch (e) {
+      alert('Lỗi đồng bộ Gist: ' + e.message + '\nDữ liệu chỉ được lưu tạm trên trình duyệt.');
     }
   }
 
@@ -505,20 +547,26 @@
     if (!title || !content) return alert('Nhập đủ');
     if (!currentConfig.posts) currentConfig.posts = [];
     currentConfig.posts.push({ title, content, image, date: new Date().toLocaleDateString('vi-VN') });
-    if (await pushConfigToGist()) {
+    try {
+      await pushConfigToGist();
       applyConfig(currentConfig);
       document.getElementById('postTitle').value = '';
       document.getElementById('postContent').value = '';
       document.getElementById('postImage').value = '';
       loadAdminData();
+    } catch (e) {
+      alert('Lỗi đồng bộ Gist: ' + e.message);
     }
   }
 
   async function deletePost(index) {
     currentConfig.posts.splice(index, 1);
-    if (await pushConfigToGist()) {
+    try {
+      await pushConfigToGist();
       applyConfig(currentConfig);
       loadAdminData();
+    } catch (e) {
+      alert('Lỗi đồng bộ Gist: ' + e.message);
     }
   }
 
@@ -529,9 +577,12 @@
       temperature: parseFloat(document.getElementById('aiTemperature').value) || 0.7,
       maxTokens: parseInt(document.getElementById('aiMaxTokens').value) || 1024
     };
-    if (await pushConfigToGist()) {
+    try {
+      await pushConfigToGist();
       applyConfig(currentConfig);
       alert('Đã lưu cấu hình AI!');
+    } catch (e) {
+      alert('Lỗi đồng bộ Gist: ' + e.message + '\nCấu hình AI được lưu tạm.');
     }
   }
 
@@ -540,9 +591,12 @@
       token: document.getElementById('telegramToken').value.trim(),
       chatId: document.getElementById('telegramChatId').value.trim()
     };
-    if (await pushConfigToGist()) {
+    try {
+      await pushConfigToGist();
       applyConfig(currentConfig);
       alert('Đã lưu cấu hình Telegram!');
+    } catch (e) {
+      alert('Lỗi đồng bộ Gist: ' + e.message);
     }
   }
 
@@ -555,15 +609,38 @@
       aiApiKey: newApiKey || currentConfig.systemConfig.aiApiKey,
       aiModel: newModel || currentConfig.systemConfig.aiModel
     };
-    if (await pushConfigToGist()) {
+    try {
+      await pushConfigToGist();
       applyConfig(currentConfig);
       alert('Đã lưu cấu hình hệ thống. Trang sẽ tải lại để áp dụng.');
       location.reload();
+    } catch (e) {
+      // Nếu không có token hoặc lỗi, lưu key tạm
+      if (newApiKey && newApiKey !== 'YOUR_OPENROUTER_API_KEY') {
+        setLocalApiKey(newApiKey);
+        alert('Không thể đồng bộ Gist. API key đã được lưu tạm trên trình duyệt. Chatbot sẽ dùng key này.');
+      } else {
+        alert('Lỗi: ' + e.message);
+      }
+    }
+  }
+
+  // Nút lưu key AI tạm (không cần Gist)
+  function saveApiKeyLocal() {
+    const apiKey = document.getElementById('newApiKey').value.trim();
+    const model = document.getElementById('newAiModel').value.trim();
+    if (apiKey) {
+      setLocalApiKey(apiKey);
+      if (model) window.AI_MODEL = model;
+      alert('Đã lưu API key tạm thời. Chatbot sẽ dùng key này ngay.');
+    } else {
+      alert('Vui lòng nhập API key.');
     }
   }
 
   async function generateAIContent() {
-    if (window.AI_API_KEY === 'YOUR_OPENROUTER_API_KEY') return alert('Vui lòng cấu hình OpenRouter API Key.');
+    const apiKey = getEffectiveApiKey();
+    if (!apiKey || apiKey === 'YOUR_OPENROUTER_API_KEY') return alert('Vui lòng cấu hình OpenRouter API Key.');
     const topic = prompt('Nhập chủ đề bài viết:');
     if (!topic) return;
     const config = window.botConfig || DEFAULT_CONFIG.botConfig;
@@ -572,12 +649,12 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${window.AI_API_KEY}`,
+          'Authorization': `Bearer ${apiKey}`,
           'HTTP-Referer': window.location.href,
           'X-Title': 'GEC English Center'
         },
         body: JSON.stringify({
-          model: window.AI_MODEL,
+          model: window.AI_MODEL || 'deepseek/deepseek-chat',
           messages: [
             { role: 'system', content: 'Viết bài giới thiệu ngắn gọn cho trung tâm Anh ngữ.' },
             { role: 'user', content: `Chủ đề: ${topic}` }
@@ -587,9 +664,7 @@
         })
       });
       const data = await res.json();
-      if (data.error) {
-        throw new Error(data.error.message || 'Lỗi API');
-      }
+      if (data.error) throw new Error(data.error.message);
       const text = data.choices?.[0]?.message?.content || '';
       document.getElementById('postContent').value = text;
     } catch (e) {
@@ -723,10 +798,13 @@
     if (!msg) return;
     appendMessage('user', msg);
     input.value = '';
-    if (!window.AI_API_KEY || window.AI_API_KEY === 'YOUR_OPENROUTER_API_KEY') {
+
+    const apiKey = getEffectiveApiKey();
+    if (!apiKey || apiKey === 'YOUR_OPENROUTER_API_KEY') {
       appendMessage('bot', '⚠️ Vui lòng cấu hình OpenRouter API Key trong Admin.');
       return;
     }
+
     const config = window.botConfig || DEFAULT_CONFIG.botConfig;
     appendMessage('bot', 'Đang suy nghĩ...');
     try {
@@ -734,12 +812,12 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${window.AI_API_KEY}`,
+          'Authorization': `Bearer ${apiKey}`,
           'HTTP-Referer': window.location.href,
           'X-Title': 'GEC English Center'
         },
         body: JSON.stringify({
-          model: window.AI_MODEL,
+          model: window.AI_MODEL || 'deepseek/deepseek-chat',
           messages: [
             { role: 'system', content: config.systemPrompt },
             { role: 'user', content: msg }
@@ -749,18 +827,21 @@
         })
       });
       const data = await res.json();
-      // Xóa tin nhắn "đang suy nghĩ"
       const thinkingMsg = document.querySelector('#chatMessages .msg.bot:last-child');
       if (thinkingMsg) thinkingMsg.remove();
 
       if (data.error) {
-        // Hiển thị lỗi chi tiết từ API
-        appendMessage('bot', `❌ Lỗi API: ${data.error.message || JSON.stringify(data.error)}`);
-      } else if (data.choices && data.choices[0]) {
-        const reply = data.choices[0].message.content;
-        appendMessage('bot', reply);
+        let errorMsg = `❌ Lỗi API: ${data.error.message}`;
+        if (data.error.message.includes('User not found')) {
+          errorMsg += '\n\n👉 API key không hợp lệ. Vui lòng kiểm tra lại trong Admin.';
+        } else if (data.error.message.includes('Insufficient credits')) {
+          errorMsg += '\n\n👉 Tài khoản OpenRouter hết credit.';
+        }
+        appendMessage('bot', errorMsg);
+      } else if (data.choices?.[0]?.message?.content) {
+        appendMessage('bot', data.choices[0].message.content);
       } else {
-        appendMessage('bot', '❌ Không nhận được phản hồi hợp lệ từ AI.');
+        appendMessage('bot', '❌ Không nhận được phản hồi từ AI.');
       }
     } catch (e) {
       const thinkingMsg = document.querySelector('#chatMessages .msg.bot:last-child');
