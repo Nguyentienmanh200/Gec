@@ -7,7 +7,6 @@
   <title>GEC | Trung tâm Tiếng Anh Kính Lỏng + AI kéo thả + Telegram Bot</title>
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <style>
-    /* ... toàn bộ CSS giữ nguyên như phiên bản trước ... */
     :root {
       --primary: #0a1f5c;
       --secondary: #f0b90b;
@@ -287,12 +286,11 @@
         <input type="text" id="telegramChatId" placeholder="-1001234567890">
         <button class="btn" onclick="saveTelegramConfig()">Lưu Telegram</button>
       </div>
-      <!-- MỚI: Cấu hình hệ thống -->
       <div class="admin-card">
         <h3>🔐 Cấu hình hệ thống</h3>
-        <p style="font-size:0.85rem; opacity:0.8;">Thay đổi mật khẩu admin hoặc API key AI. Sau khi lưu, trang sẽ tự động tải lại để áp dụng.</p>
+        <p style="font-size:0.85rem; opacity:0.8;">Nhập trường muốn thay đổi, để trống để giữ nguyên.</p>
         <label>Mật khẩu Admin mới</label>
-        <input type="password" id="newAdminPassword" placeholder="Nhập mật khẩu mới">
+        <input type="password" id="newAdminPassword" placeholder="Nhập mật khẩu mới (nếu muốn đổi)">
         <label>OpenRouter API Key</label>
         <input type="text" id="newApiKey" placeholder="sk-or-v1-...">
         <label>Model AI</label>
@@ -322,36 +320,29 @@
 
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
-  // ===== CẤU HÌNH HỆ THỐNG (có thể ghi đè trong Admin Panel) =====
+  // ===== CẤU HÌNH MẶC ĐỊNH =====
   const DEFAULT_CONFIG = {
     adminPassword: 'admin123',
     aiApiKey: 'YOUR_OPENROUTER_API_KEY',
     aiModel: 'deepseek/deepseek-v4-pro'
   };
 
-  // Hàm lấy cấu hình hệ thống từ localStorage (nếu có)
   function getSystemConfig() {
     try {
       const stored = JSON.parse(localStorage.getItem('gec_system_config'));
-      if (stored && stored.adminPassword && stored.aiApiKey) {
-        return stored;
-      }
-    } catch(e) {}
-    return DEFAULT_CONFIG;
+      return { ...DEFAULT_CONFIG, ...stored };
+    } catch(e) { return DEFAULT_CONFIG; }
   }
 
-  // Hàm lưu cấu hình hệ thống
-  function saveSystemConfig(config) {
+  function saveSystemConfigToStorage(config) {
     localStorage.setItem('gec_system_config', JSON.stringify(config));
   }
 
-  // Áp dụng cấu hình hiện tại
   let systemConfig = getSystemConfig();
-  const ADMIN_PASSWORD = systemConfig.adminPassword;
-  const AI_API_KEY = systemConfig.aiApiKey;
-  const AI_MODEL = systemConfig.aiModel;
+  let ADMIN_PASSWORD = systemConfig.adminPassword;
+  let AI_API_KEY = systemConfig.aiApiKey;
+  let AI_MODEL = systemConfig.aiModel;
 
-  // Các cấu hình khác
   const DEFAULT_BOT_CONFIG = {
     systemPrompt: 'Bạn là trợ lý AI của Trung tâm Anh ngữ GEC, tư vấn khóa học IELTS, TOEIC, giao tiếp, trẻ em. Trả lời ngắn gọn, thân thiện.',
     welcomeMessage: 'Xin chào! Tôi là trợ lý ảo GEC. Bạn cần tư vấn gì?',
@@ -370,6 +361,9 @@
     catch(e) { return {}; }
   }
   function saveTelegramConfigToStorage(config) { localStorage.setItem('gec_telegram_config', JSON.stringify(config)); }
+
+  // Hàm lưu site content (không trùng tên)
+  function storeSiteContent(c) { localStorage.setItem('gec_site', JSON.stringify(c)); }
 
   AOS.init({ duration:750, once:true, offset:80 });
 
@@ -510,7 +504,6 @@
     }
   }
 
-  // Gọi OpenRouter
   async function callOpenRouter(messages, temperature, maxTokens) {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method:'POST',
@@ -546,7 +539,6 @@
   function getPosts(){ return JSON.parse(localStorage.getItem('gec_posts')||'[]'); }
   function savePosts(posts){ localStorage.setItem('gec_posts', JSON.stringify(posts)); }
   function getSiteContent(){ return JSON.parse(localStorage.getItem('gec_site')||'{}'); }
-  function saveSiteContent(c){ localStorage.setItem('gec_site', JSON.stringify(c)); }
   function loadBlog(){
     const posts=getPosts();
     document.getElementById('blogList').innerHTML=posts.map(p=>`
@@ -615,10 +607,10 @@
     const tcfg=getTelegramConfig();
     document.getElementById('telegramToken').value=tcfg.token||'';
     document.getElementById('telegramChatId').value=tcfg.chatId||'';
-    // Hiển thị cấu hình hệ thống hiện tại
-    document.getElementById('newAdminPassword').value = ''; // Không hiển thị mật khẩu cũ
-    document.getElementById('newApiKey').value = AI_API_KEY;
-    document.getElementById('newAiModel').value = AI_MODEL;
+    const sysCfg = getSystemConfig();
+    document.getElementById('newAdminPassword').value = '';
+    document.getElementById('newApiKey').value = sysCfg.aiApiKey;
+    document.getElementById('newAiModel').value = sysCfg.aiModel;
   }
   let editingIndex=-1;
   function savePost(){
@@ -643,6 +635,7 @@
     try{ const c=await callOpenRouter([{role:'system',content:'Viết bài ngắn cho trung tâm Anh ngữ.'},{role:'user',content:'Chủ đề: '+topic}],config.temperature,2048); document.getElementById('postContent').value=c; }
     catch(e){ alert('Lỗi: '+e.message); }
   }
+  // Sửa lỗi: đổi tên hàm lưu trữ thành storeSiteContent
   function saveSiteContent(){
     const content={
       slogan:document.getElementById('editSlogan').value, heroDesc:document.getElementById('editHeroDesc').value,
@@ -651,7 +644,9 @@
       address:document.getElementById('editAddress').value, phone:document.getElementById('editPhone').value,
       email:document.getElementById('editEmail').value
     };
-    saveSiteContent(content); loadSiteContent(); alert('Đã lưu!');
+    storeSiteContent(content);
+    loadSiteContent();
+    alert('Đã lưu!');
   }
   function saveBotConfig(){
     const config={
@@ -669,27 +664,22 @@
     alert('Đã lưu cấu hình Telegram!');
   }
 
-  // MỚI: Lưu cấu hình hệ thống (admin password, API key, model)
   function saveSystemConfig() {
     const newPassword = document.getElementById('newAdminPassword').value.trim();
     const newApiKey = document.getElementById('newApiKey').value.trim();
     const newModel = document.getElementById('newAiModel').value.trim();
 
-    if (!newPassword) return alert('Vui lòng nhập mật khẩu admin mới.');
-    if (!newApiKey) return alert('Vui lòng nhập API key.');
-    if (!newModel) return alert('Vui lòng nhập Model AI.');
-
-    const newConfig = {
-      adminPassword: newPassword,
-      aiApiKey: newApiKey,
-      aiModel: newModel
+    const currentConfig = getSystemConfig();
+    const updatedConfig = {
+      adminPassword: newPassword || currentConfig.adminPassword,
+      aiApiKey: newApiKey || currentConfig.aiApiKey,
+      aiModel: newModel || currentConfig.aiModel
     };
-    saveSystemConfig(newConfig);
+    saveSystemConfigToStorage(updatedConfig);
     alert('Đã lưu cấu hình hệ thống. Trang sẽ tải lại để áp dụng.');
     location.reload();
   }
 
-  // Gửi Telegram
   async function sendTelegramNotification(name, phone, email, course, message) {
     const cfg = getTelegramConfig();
     if (!cfg.token || !cfg.chatId) return false;
