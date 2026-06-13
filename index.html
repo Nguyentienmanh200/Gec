@@ -4,9 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=yes">
   <meta name="description" content="Trung tâm Anh ngữ GEC - Chắp cánh tương lai bằng tiếng Anh. Chatbot AI kéo thả tự do.">
-  <title>GEC | Trung tâm Tiếng Anh Kính Lỏng + AI kéo thả</title>
+  <title>GEC | Trung tâm Tiếng Anh Kính Lỏng + AI kéo thả + Telegram Bot</title>
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <style>
+    /* ... toàn bộ CSS giữ nguyên như phiên bản trước ... */
     :root {
       --primary: #0a1f5c;
       --secondary: #f0b90b;
@@ -117,35 +118,28 @@
     select option { background:#0a1f4a; color:white; }
 
     /* Chatbot AI */
-    .chatbot-container {
-      position: fixed; bottom: 24px; right: 24px; z-index: 2000;
-    }
+    .chatbot-container { position: fixed; bottom: 24px; right: 24px; z-index: 2000; }
     .chatbot-toggle {
       width: 58px; height: 58px; border-radius: 50%; background: var(--secondary); color: #0a1120;
       display: flex; align-items: center; justify-content: center; cursor: grab; font-size: 1.8rem;
       box-shadow: 0 8px 24px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.4);
-      transition: var(--transition); position: fixed;
-      touch-action: none; user-select: none; -webkit-user-select: none;
+      transition: var(--transition); position: fixed; touch-action: none; user-select: none; -webkit-user-select: none;
       z-index: 2001;
     }
     .chatbot-toggle:active { cursor: grabbing; }
     .chatbot-window {
-      position: fixed;
-      width: 360px; max-width: 90vw; height: 480px;
+      position: fixed; width: 360px; max-width: 90vw; height: 480px;
       background: rgba(15,25,50,0.7); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
       border: 1px solid rgba(255,255,255,0.25); border-radius: 24px;
       display: flex; flex-direction: column;
       box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-      overflow: hidden;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.3s ease;
+      overflow: hidden; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
     }
     .chatbot-window.open { opacity: 1; pointer-events: auto; }
     .chatbot-header {
       padding: 16px; background: rgba(0,0,0,0.3); font-weight: 700;
       display: flex; justify-content: space-between; align-items: center;
-      cursor: grab; user-select: none; -webkit-user-select: none;
-      touch-action: none;
+      cursor: grab; user-select: none; -webkit-user-select: none; touch-action: none;
     }
     .chatbot-header:active { cursor: grabbing; }
     .chatbot-header span:last-child { cursor: pointer; }
@@ -166,10 +160,7 @@
     .admin-card label { display:block; margin-top:10px; font-weight:600; }
 
     footer { text-align:center; padding:30px 20px; background:rgba(0,0,0,0.3); backdrop-filter:blur(10px); color:rgba(255,255,255,0.7); position:relative; }
-    .admin-login-link {
-      position: absolute; bottom: 10px; right: 20px; color: rgba(255,255,255,0.25); text-decoration: none;
-      font-size: 0.7rem; transition: color 0.3s;
-    }
+    .admin-login-link { position: absolute; bottom: 10px; right: 20px; color: rgba(255,255,255,0.25); text-decoration: none; font-size: 0.7rem; transition: color 0.3s; }
     .admin-login-link:hover { color: rgba(255,255,255,0.7); }
     .floating-buttons { display:none !important; }
 
@@ -288,6 +279,26 @@
         <input type="number" id="aiMaxTokens" value="1024" min="100" max="4096">
         <button class="btn" onclick="saveBotConfig()">Lưu cấu hình AI</button>
       </div>
+      <div class="admin-card">
+        <h3>📢 Cấu hình Telegram Bot</h3>
+        <label>Bot Token</label>
+        <input type="text" id="telegramToken" placeholder="123456:ABC-DEF...">
+        <label>Chat ID</label>
+        <input type="text" id="telegramChatId" placeholder="-1001234567890">
+        <button class="btn" onclick="saveTelegramConfig()">Lưu Telegram</button>
+      </div>
+      <!-- MỚI: Cấu hình hệ thống -->
+      <div class="admin-card">
+        <h3>🔐 Cấu hình hệ thống</h3>
+        <p style="font-size:0.85rem; opacity:0.8;">Thay đổi mật khẩu admin hoặc API key AI. Sau khi lưu, trang sẽ tự động tải lại để áp dụng.</p>
+        <label>Mật khẩu Admin mới</label>
+        <input type="password" id="newAdminPassword" placeholder="Nhập mật khẩu mới">
+        <label>OpenRouter API Key</label>
+        <input type="text" id="newApiKey" placeholder="sk-or-v1-...">
+        <label>Model AI</label>
+        <input type="text" id="newAiModel" placeholder="deepseek/deepseek-v4-pro">
+        <button class="btn" onclick="saveSystemConfig()">Lưu cấu hình hệ thống</button>
+      </div>
       <button class="btn" onclick="logout()">Đăng xuất</button>
     </div>
   </div>
@@ -311,11 +322,36 @@
 
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
-  // ===== CẤU HÌNH =====
-  const AI_API_KEY = 'YOUR_OPENROUTER_API_KEY';
-  const AI_MODEL = 'deepseek/deepseek-v4-pro';
-  const ADMIN_PASSWORD = 'admin123';
+  // ===== CẤU HÌNH HỆ THỐNG (có thể ghi đè trong Admin Panel) =====
+  const DEFAULT_CONFIG = {
+    adminPassword: 'admin123',
+    aiApiKey: 'YOUR_OPENROUTER_API_KEY',
+    aiModel: 'deepseek/deepseek-v4-pro'
+  };
 
+  // Hàm lấy cấu hình hệ thống từ localStorage (nếu có)
+  function getSystemConfig() {
+    try {
+      const stored = JSON.parse(localStorage.getItem('gec_system_config'));
+      if (stored && stored.adminPassword && stored.aiApiKey) {
+        return stored;
+      }
+    } catch(e) {}
+    return DEFAULT_CONFIG;
+  }
+
+  // Hàm lưu cấu hình hệ thống
+  function saveSystemConfig(config) {
+    localStorage.setItem('gec_system_config', JSON.stringify(config));
+  }
+
+  // Áp dụng cấu hình hiện tại
+  let systemConfig = getSystemConfig();
+  const ADMIN_PASSWORD = systemConfig.adminPassword;
+  const AI_API_KEY = systemConfig.aiApiKey;
+  const AI_MODEL = systemConfig.aiModel;
+
+  // Các cấu hình khác
   const DEFAULT_BOT_CONFIG = {
     systemPrompt: 'Bạn là trợ lý AI của Trung tâm Anh ngữ GEC, tư vấn khóa học IELTS, TOEIC, giao tiếp, trẻ em. Trả lời ngắn gọn, thân thiện.',
     welcomeMessage: 'Xin chào! Tôi là trợ lý ảo GEC. Bạn cần tư vấn gì?',
@@ -329,9 +365,14 @@
   }
   function saveBotConfigToStorage(config) { localStorage.setItem('gec_bot_config', JSON.stringify(config)); }
 
+  function getTelegramConfig() {
+    try { return JSON.parse(localStorage.getItem('gec_telegram_config')) || {}; }
+    catch(e) { return {}; }
+  }
+  function saveTelegramConfigToStorage(config) { localStorage.setItem('gec_telegram_config', JSON.stringify(config)); }
+
   AOS.init({ duration:750, once:true, offset:80 });
 
-  // Mobile menu
   document.getElementById('menuToggle').addEventListener('click',()=>{
     document.getElementById('menuToggle').classList.toggle('active');
     document.getElementById('navMenu').classList.toggle('active');
@@ -348,10 +389,8 @@
 
   // ===== KÉO THẢ NÚT CHAT =====
   const chatToggle = document.getElementById('chatbotToggle');
-  let isDraggingToggle = false;
-  let toggleStartX = 0, toggleStartY = 0;
-  let toggleStartLeft = 0, toggleStartTop = 0;
-  const DRAG_THRESHOLD = 5; // pixel, nếu di chuyển ít hơn coi là click
+  let isDraggingToggle = false, toggleStartX = 0, toggleStartY = 0, toggleStartLeft = 0, toggleStartTop = 0;
+  const DRAG_THRESHOLD = 5;
 
   function setDefaultTogglePosition() {
     if (!chatToggle.style.left || !chatToggle.style.top) {
@@ -365,8 +404,7 @@
     isDraggingToggle = true;
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    toggleStartX = clientX;
-    toggleStartY = clientY;
+    toggleStartX = clientX; toggleStartY = clientY;
     toggleStartLeft = parseInt(chatToggle.style.left, 10) || 0;
     toggleStartTop = parseInt(chatToggle.style.top, 10) || 0;
     chatToggle.style.transition = 'none';
@@ -381,34 +419,26 @@
     e.preventDefault();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    const dx = clientX - toggleStartX;
-    const dy = clientY - toggleStartY;
-    let newLeft = toggleStartLeft + dx;
-    let newTop = toggleStartTop + dy;
+    const dx = clientX - toggleStartX, dy = clientY - toggleStartY;
+    let newLeft = toggleStartLeft + dx, newTop = toggleStartTop + dy;
     const size = 58;
     newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - size));
     newTop = Math.max(0, Math.min(newTop, window.innerHeight - size));
-    chatToggle.style.left = newLeft + 'px';
-    chatToggle.style.top = newTop + 'px';
+    chatToggle.style.left = newLeft + 'px'; chatToggle.style.top = newTop + 'px';
   }
 
   function stopDragToggle(e) {
     if (!isDraggingToggle) return;
     const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
     const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-    const dx = clientX - toggleStartX;
-    const dy = clientY - toggleStartY;
-    const distance = Math.sqrt(dx*dx + dy*dy);
+    const distance = Math.sqrt((clientX - toggleStartX)**2 + (clientY - toggleStartY)**2);
     isDraggingToggle = false;
     chatToggle.style.transition = '';
     document.removeEventListener('mousemove', onDragToggle);
     document.removeEventListener('mouseup', stopDragToggle);
     document.removeEventListener('touchmove', onDragToggle);
     document.removeEventListener('touchend', stopDragToggle);
-    // Nếu chỉ click (di chuyển ít) thì mở chat
-    if (distance < DRAG_THRESHOLD) {
-      toggleChatbot();
-    }
+    if (distance < DRAG_THRESHOLD) toggleChatbot();
   }
 
   chatToggle.addEventListener('mousedown', startDragToggle);
@@ -417,18 +447,13 @@
   // ===== KÉO THẢ CỬA SỔ CHAT =====
   const chatWindow = document.getElementById('chatbotWindow');
   const chatHeader = document.getElementById('chatbotHeader');
-  let isDraggingWindow = false;
-  let windowStartX = 0, windowStartY = 0;
-  let windowStartLeft = 0, windowStartTop = 0;
+  let isDraggingWindow = false, winStartX = 0, winStartY = 0, winStartLeft = 0, winStartTop = 0;
 
   function setDefaultWindowPosition() {
     if (!chatWindow.style.left || !chatWindow.style.top) {
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const w = chatWindow.offsetWidth || 360;
-      const h = chatWindow.offsetHeight || 480;
-      chatWindow.style.left = Math.max(0, vw - w - 20) + 'px';
-      chatWindow.style.top = Math.max(0, vh - h - 80) + 'px';
+      const vw = window.innerWidth, vh = window.innerHeight;
+      chatWindow.style.left = Math.max(0, vw - 380) + 'px';
+      chatWindow.style.top = Math.max(0, vh - 540) + 'px';
     }
   }
 
@@ -438,10 +463,9 @@
     isDraggingWindow = true;
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    windowStartX = clientX;
-    windowStartY = clientY;
-    windowStartLeft = parseInt(chatWindow.style.left, 10) || 0;
-    windowStartTop = parseInt(chatWindow.style.top, 10) || 0;
+    winStartX = clientX; winStartY = clientY;
+    winStartLeft = parseInt(chatWindow.style.left, 10) || 0;
+    winStartTop = parseInt(chatWindow.style.top, 10) || 0;
     chatWindow.style.transition = 'none';
     document.addEventListener('mousemove', onDragWindow);
     document.addEventListener('mouseup', stopDragWindow);
@@ -454,16 +478,12 @@
     e.preventDefault();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    const dx = clientX - windowStartX;
-    const dy = clientY - windowStartY;
-    let newLeft = windowStartLeft + dx;
-    let newTop = windowStartTop + dy;
-    const winW = chatWindow.offsetWidth;
-    const winH = chatWindow.offsetHeight;
+    const dx = clientX - winStartX, dy = clientY - winStartY;
+    let newLeft = winStartLeft + dx, newTop = winStartTop + dy;
+    const winW = chatWindow.offsetWidth, winH = chatWindow.offsetHeight;
     newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - winW));
     newTop = Math.max(0, Math.min(newTop, window.innerHeight - winH));
-    chatWindow.style.left = newLeft + 'px';
-    chatWindow.style.top = newTop + 'px';
+    chatWindow.style.left = newLeft + 'px'; chatWindow.style.top = newTop + 'px';
   }
 
   function stopDragWindow() {
@@ -481,12 +501,9 @@
 
   let welcomeShown = false;
   function toggleChatbot(){
-    const win = document.getElementById('chatbotWindow');
-    if (!win.classList.contains('open')) {
-      setDefaultWindowPosition();
-    }
-    win.classList.toggle('open');
-    if (win.classList.contains('open') && !welcomeShown) {
+    if (!chatWindow.classList.contains('open')) setDefaultWindowPosition();
+    chatWindow.classList.toggle('open');
+    if (chatWindow.classList.contains('open') && !welcomeShown) {
       const config = getBotConfig();
       appendMessage('bot', config.welcomeMessage);
       welcomeShown = true;
@@ -525,7 +542,7 @@
   }
   document.getElementById('chatInput').addEventListener('keypress',e=>{ if(e.key==='Enter') sendChat(); });
 
-  // ADMIN (giữ nguyên)
+  // ===== ADMIN =====
   function getPosts(){ return JSON.parse(localStorage.getItem('gec_posts')||'[]'); }
   function savePosts(posts){ localStorage.setItem('gec_posts', JSON.stringify(posts)); }
   function getSiteContent(){ return JSON.parse(localStorage.getItem('gec_site')||'{}'); }
@@ -564,13 +581,7 @@
     }
   }
   window.addEventListener('hashchange',checkAdminHash);
-  window.addEventListener('load',()=>{ 
-    loadBlog(); 
-    loadSiteContent(); 
-    checkAdminHash(); 
-    welcomeShown=false;
-    setDefaultTogglePosition();
-  });
+  window.addEventListener('load',()=>{ loadBlog(); loadSiteContent(); checkAdminHash(); welcomeShown=false; setDefaultTogglePosition(); });
   function login(){
     if(document.getElementById('adminPassword').value===ADMIN_PASSWORD){
       sessionStorage.setItem('admin_logged','true');
@@ -601,6 +612,13 @@
     document.getElementById('aiWelcome').value=bc.welcomeMessage||'';
     document.getElementById('aiTemperature').value=bc.temperature||0.7;
     document.getElementById('aiMaxTokens').value=bc.maxTokens||1024;
+    const tcfg=getTelegramConfig();
+    document.getElementById('telegramToken').value=tcfg.token||'';
+    document.getElementById('telegramChatId').value=tcfg.chatId||'';
+    // Hiển thị cấu hình hệ thống hiện tại
+    document.getElementById('newAdminPassword').value = ''; // Không hiển thị mật khẩu cũ
+    document.getElementById('newApiKey').value = AI_API_KEY;
+    document.getElementById('newAiModel').value = AI_MODEL;
   }
   let editingIndex=-1;
   function savePost(){
@@ -618,7 +636,7 @@
   function editPost(i){ const p=getPosts()[i]; document.getElementById('postTitle').value=p.title; document.getElementById('postContent').value=p.content; document.getElementById('postImage').value=p.image||''; editingIndex=i; }
   function deletePost(i){ const posts=getPosts(); posts.splice(i,1); savePosts(posts); loadAdminData(); loadBlog(); }
   async function generateAIContent(){
-    if(AI_API_KEY==='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')return alert('Thay API key');
+    if(AI_API_KEY==='YOUR_OPENROUTER_API_KEY')return alert('Thay API key');
     const topic=prompt('Chủ đề:');
     if(!topic)return;
     const config=getBotConfig();
@@ -644,11 +662,60 @@
     };
     saveBotConfigToStorage(config); welcomeShown=false; alert('Đã lưu cấu hình AI!');
   }
-  document.getElementById('contactForm').addEventListener('submit',async(e)=>{
+  function saveTelegramConfig(){
+    const token = document.getElementById('telegramToken').value.trim();
+    const chatId = document.getElementById('telegramChatId').value.trim();
+    saveTelegramConfigToStorage({ token, chatId });
+    alert('Đã lưu cấu hình Telegram!');
+  }
+
+  // MỚI: Lưu cấu hình hệ thống (admin password, API key, model)
+  function saveSystemConfig() {
+    const newPassword = document.getElementById('newAdminPassword').value.trim();
+    const newApiKey = document.getElementById('newApiKey').value.trim();
+    const newModel = document.getElementById('newAiModel').value.trim();
+
+    if (!newPassword) return alert('Vui lòng nhập mật khẩu admin mới.');
+    if (!newApiKey) return alert('Vui lòng nhập API key.');
+    if (!newModel) return alert('Vui lòng nhập Model AI.');
+
+    const newConfig = {
+      adminPassword: newPassword,
+      aiApiKey: newApiKey,
+      aiModel: newModel
+    };
+    saveSystemConfig(newConfig);
+    alert('Đã lưu cấu hình hệ thống. Trang sẽ tải lại để áp dụng.');
+    location.reload();
+  }
+
+  // Gửi Telegram
+  async function sendTelegramNotification(name, phone, email, course, message) {
+    const cfg = getTelegramConfig();
+    if (!cfg.token || !cfg.chatId) return false;
+    const text = `📢 ĐĂNG KÝ TƯ VẤN MỚI\n\n👤 Họ tên: ${name}\n📞 SĐT: ${phone}\n📧 Email: ${email || 'Không có'}\n📚 Khóa học: ${course || 'Chưa chọn'}\n💬 Nội dung: ${message || 'Không có'}`;
+    try {
+      await fetch(`https://api.telegram.org/bot${cfg.token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: cfg.chatId, text })
+      });
+      return true;
+    } catch (e) {
+      console.warn('Gửi Telegram thất bại:', e);
+      return false;
+    }
+  }
+
+  document.getElementById('contactForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const name=document.getElementById('name').value.trim();
-    const phone=document.getElementById('phone').value.trim();
-    if(!name||!phone)return alert('Điền đầy đủ');
+    const name = document.getElementById('name').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    if (!name || !phone) return alert('Điền đầy đủ họ tên và SĐT');
+    const email = document.getElementById('email').value.trim();
+    const course = document.getElementById('course').value;
+    const message = document.getElementById('message').value.trim();
+    await sendTelegramNotification(name, phone, email, course, message);
     alert('GEC đã nhận được thông tin của bạn!');
     document.getElementById('contactForm').reset();
   });
