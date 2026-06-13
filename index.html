@@ -7,7 +7,7 @@
   <title>GEC | Trung tâm Tiếng Anh Kính Lỏng + AI + Gist</title>
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <style>
-    /* ... toàn bộ CSS giữ nguyên như phiên bản trước ... */
+    /* ... toàn bộ CSS giữ nguyên từ phiên bản trước ... */
     :root {
       --primary: #0a1f5c;
       --secondary: #f0b90b;
@@ -158,6 +158,9 @@
     .admin-card input, .admin-card textarea, .admin-card select { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.25); color:white; border-radius:16px; padding:12px 18px; width:100%; margin:8px 0; }
     .admin-card button { margin:8px 4px; }
     .admin-card label { display:block; margin-top:10px; font-weight:600; }
+    .key-status { font-family: monospace; font-size: 0.85rem; margin-top: 5px; }
+    .key-valid { color: #4ade80; }
+    .key-invalid { color: #f87171; }
 
     footer { text-align:center; padding:30px 20px; background:rgba(0,0,0,0.3); backdrop-filter:blur(10px); color:rgba(255,255,255,0.7); position:relative; }
     .floating-buttons { display:none !important; }
@@ -296,16 +299,19 @@
         <button class="btn" onclick="saveTelegramConfig()">Lưu Telegram</button>
       </div>
       <div class="admin-card">
-        <h3>🔐 Cấu hình hệ thống (ưu tiên Gist, nếu Gist lỗi sẽ dùng key tạm)</h3>
-        <p style="font-size:0.85rem; opacity:0.8;">Nhập trường muốn thay đổi. Nếu Gist không được cấu hình, key sẽ được lưu tạm trên trình duyệt.</p>
-        <label>Mật khẩu Admin mới</label>
-        <input type="password" id="newAdminPassword" placeholder="Nhập mật khẩu mới (nếu muốn đổi)">
+        <h3>🔐 Cấu hình hệ thống (API Key & Model)</h3>
+        <p style="font-size:0.85rem; opacity:0.8;">Nhập API Key và Model. Nhấn "Lưu key tạm" để dùng ngay không cần Gist.</p>
         <label>OpenRouter API Key</label>
         <input type="text" id="newApiKey" placeholder="sk-or-v1-...">
-        <label>Model AI (ví dụ: deepseek/deepseek-chat)</label>
+        <div id="apiKeyStatus" class="key-status"></div>
+        <label>Model AI</label>
         <input type="text" id="newAiModel" placeholder="deepseek/deepseek-chat">
-        <button class="btn" onclick="saveSystemConfig()">Lưu cấu hình (đồng bộ Gist nếu có)</button>
-        <button class="btn" onclick="saveApiKeyLocal()" style="background:#f59e0b;">💾 Lưu key AI tạm (không cần Gist)</button>
+        <button class="btn" onclick="saveApiKeyLocal()">💾 Lưu key AI tạm (dùng ngay)</button>
+        <button class="btn" onclick="checkApiKey()">🔍 Kiểm tra API key</button>
+        <button class="btn" onclick="saveSystemConfig()">☁️ Lưu lên Gist (nếu có token)</button>
+        <label style="margin-top:12px;">Mật khẩu Admin mới</label>
+        <input type="password" id="newAdminPassword" placeholder="Nhập mật khẩu mới (nếu muốn đổi)">
+        <button class="btn" onclick="saveSystemConfig()">Lưu tất cả lên Gist</button>
       </div>
       <button class="btn" onclick="logout()">Đăng xuất</button>
     </div>
@@ -382,6 +388,12 @@
     const localKey = getLocalApiKey();
     if (localKey) return localKey;
     return gistKey;
+  }
+
+  function maskKey(key) {
+    if (!key || key === 'YOUR_OPENROUTER_API_KEY') return 'Chưa cài đặt';
+    if (key.length < 10) return key;
+    return key.substring(0, 8) + '...' + key.substring(key.length - 4);
   }
 
   async function loadConfigFromGist() {
@@ -474,6 +486,7 @@
     document.getElementById('newAiModel').value = window.AI_MODEL || '';
     document.getElementById('newAdminPassword').value = '';
     document.getElementById('githubToken').value = getGithubToken();
+    updateApiKeyStatus();
     const posts = currentConfig.posts || [];
     document.getElementById('postList').innerHTML = posts.map((p, i) => `
       <div style="margin:8px 0; background:rgba(255,255,255,0.1); padding:8px; border-radius:12px;">
@@ -481,6 +494,19 @@
         <button class="btn" onclick="deletePost(${i})" style="padding:4px 12px;">Xóa</button>
       </div>
     `).join('');
+  }
+
+  function updateApiKeyStatus() {
+    const key = getEffectiveApiKey();
+    const statusEl = document.getElementById('apiKeyStatus');
+    if (!statusEl) return;
+    if (!key || key === 'YOUR_OPENROUTER_API_KEY') {
+      statusEl.className = 'key-status key-invalid';
+      statusEl.textContent = '❌ Chưa có key hợp lệ';
+    } else {
+      statusEl.className = 'key-status key-valid';
+      statusEl.textContent = `✅ Key hiện tại: ${maskKey(key)}`;
+    }
   }
 
   async function saveGistConfig() {
@@ -518,11 +544,6 @@
   }
 
   async function viewGistContent() {
-    const token = document.getElementById('githubToken').value.trim();
-    if (!token) {
-      alert('Nhập token trước khi xem.');
-      return;
-    }
     try {
       const res = await fetch(GIST_RAW_URL);
       const text = await res.text();
@@ -642,9 +663,47 @@
     if (apiKey) {
       setLocalApiKey(apiKey);
       if (model) window.AI_MODEL = model;
+      updateApiKeyStatus();
       alert('Đã lưu API key tạm thời. Chatbot sẽ dùng key này ngay.');
     } else {
       alert('Vui lòng nhập API key.');
+    }
+  }
+
+  async function checkApiKey() {
+    const apiKey = document.getElementById('newApiKey').value.trim();
+    if (!apiKey) {
+      document.getElementById('apiKeyStatus').className = 'key-status key-invalid';
+      document.getElementById('apiKeyStatus').textContent = '❌ Chưa nhập key';
+      return;
+    }
+    const model = document.getElementById('newAiModel').value.trim() || 'deepseek/deepseek-chat';
+    document.getElementById('apiKeyStatus').textContent = 'Đang kiểm tra...';
+    try {
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': window.location.href
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [{ role: 'user', content: 'test' }],
+          max_tokens: 1
+        })
+      });
+      const data = await res.json();
+      if (data.error) {
+        document.getElementById('apiKeyStatus').className = 'key-status key-invalid';
+        document.getElementById('apiKeyStatus').textContent = `❌ Key không hợp lệ: ${data.error.message}`;
+      } else {
+        document.getElementById('apiKeyStatus').className = 'key-status key-valid';
+        document.getElementById('apiKeyStatus').textContent = `✅ Key hợp lệ (model: ${model})`;
+      }
+    } catch (e) {
+      document.getElementById('apiKeyStatus').className = 'key-status key-invalid';
+      document.getElementById('apiKeyStatus').textContent = '❌ Lỗi kết nối: ' + e.message;
     }
   }
 
@@ -843,7 +902,8 @@
       if (data.error) {
         let errorMsg = `❌ Lỗi API: ${data.error.message}`;
         if (data.error.message.includes('User not found')) {
-          errorMsg += '\n\n👉 API key không hợp lệ. Vui lòng kiểm tra lại trong Admin.';
+          errorMsg += `\n\n👉 Key đang dùng: ${maskKey(apiKey)}`;
+          errorMsg += '\n\n👉 Vui lòng kiểm tra lại API key trong Admin (mục Cấu hình hệ thống) và nhấn "Kiểm tra API key".';
         } else if (data.error.message.includes('Insufficient credits')) {
           errorMsg += '\n\n👉 Tài khoản OpenRouter hết credit.';
         }
