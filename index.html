@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=yes">
   <meta name="description" content="Trung tâm Anh ngữ GEC - Chắp cánh tương lai bằng tiếng Anh. Chatbot AI kéo thả tự do.">
-  <title>GEC | Trung tâm Tiếng Anh Kính Lỏng + AI kéo thả + Telegram Bot</title>
+  <title>GEC | Trung tâm Tiếng Anh Kính Lỏng + AI + Gist</title>
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <style>
     :root {
@@ -159,8 +159,6 @@
     .admin-card label { display:block; margin-top:10px; font-weight:600; }
 
     footer { text-align:center; padding:30px 20px; background:rgba(0,0,0,0.3); backdrop-filter:blur(10px); color:rgba(255,255,255,0.7); position:relative; }
-    .admin-login-link { position: absolute; bottom: 10px; right: 20px; color: rgba(255,255,255,0.25); text-decoration: none; font-size: 0.7rem; transition: color 0.3s; }
-    .admin-login-link:hover { color: rgba(255,255,255,0.7); }
     .floating-buttons { display:none !important; }
 
     @media (max-width:768px) {
@@ -230,7 +228,6 @@
   </div></div></section>
   <footer>
     <p>© 2025 GEC English Center.</p>
-    <a href="#admin" class="admin-login-link">⚙️ Quản trị</a>
   </footer>
 </div>
 
@@ -243,6 +240,13 @@
       <button class="btn" onclick="login()">Đăng nhập</button>
     </div>
     <div id="adminContent" style="display:none;">
+      <div class="admin-card">
+        <h3>☁️ Cấu hình đồng bộ Gist</h3>
+        <p style="font-size:0.85rem; opacity:0.8;">Gist ID đã được cài đặt sẵn. Chỉ cần nhập GitHub Token để bắt đầu đồng bộ.</p>
+        <label>GitHub Token (quyền gist)</label>
+        <input type="password" id="githubToken" placeholder="ghp_xxxx...">
+        <button class="btn" onclick="saveGistConfig()">Lưu token & tải lại từ Gist</button>
+      </div>
       <div class="admin-card">
         <h3>Quản lý bài viết</h3>
         <input type="text" id="postTitle" placeholder="Tiêu đề">
@@ -320,76 +324,297 @@
 
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
-  // ===== CẤU HÌNH MẶC ĐỊNH =====
+  // ===== CẤU HÌNH GIST =====
+  const GIST_ID = 'dc813ae4bf875e7c686c1283062e27bd';
+  const GIST_RAW_URL = `https://gist.githubusercontent.com/Nguyentienmanh200/${GIST_ID}/raw/config.json`;
+  const GIST_API_URL = `https://api.github.com/gists/${GIST_ID}`;
+
+  // Cấu hình mặc định (dùng khi chưa có Gist hoặc lỗi)
   const DEFAULT_CONFIG = {
-    adminPassword: 'admin123',
-    aiApiKey: 'YOUR_OPENROUTER_API_KEY',
-    aiModel: 'deepseek/deepseek-v4-pro'
+    slogan: "GEC – Chắp cánh tương lai bằng tiếng Anh",
+    heroDesc: "Khơi mở tiềm năng, chinh phục tiếng Anh cùng đội ngũ giáo viên xuất sắc và lộ trình cá nhân hóa.",
+    aboutText: "Thành lập từ 2015, hơn 10.000 học viên thành công.",
+    years: "8+",
+    teachers: "200+",
+    students: "10K+",
+    address: "123 Nguyễn Huệ, Q.1",
+    phone: "1900 888 999",
+    email: "info@gec.edu.vn",
+    posts: [],
+    botConfig: {
+      systemPrompt: "Bạn là trợ lý AI của Trung tâm Anh ngữ GEC, tư vấn khóa học IELTS, TOEIC, giao tiếp, trẻ em. Trả lời ngắn gọn, thân thiện.",
+      welcomeMessage: "Xin chào! Tôi là trợ lý ảo GEC. Bạn cần tư vấn gì?",
+      temperature: 0.7,
+      maxTokens: 1024
+    },
+    telegramConfig: { token: "", chatId: "" },
+    systemConfig: {
+      adminPassword: "admin123",
+      aiApiKey: "YOUR_OPENROUTER_API_KEY",
+      aiModel: "deepseek/deepseek-v4-pro"
+    }
   };
 
-  function getSystemConfig() {
+  let currentConfig = { ...DEFAULT_CONFIG };
+
+  // Token GitHub được lưu trong localStorage (chỉ trên máy admin)
+  function getGithubToken() {
+    return localStorage.getItem('gec_github_token') || '';
+  }
+  function setGithubToken(token) {
+    localStorage.setItem('gec_github_token', token);
+  }
+
+  // ===== LOAD CONFIG TỪ GIST =====
+  async function loadConfigFromGist() {
     try {
-      const stored = JSON.parse(localStorage.getItem('gec_system_config'));
-      return { ...DEFAULT_CONFIG, ...stored };
-    } catch(e) { return DEFAULT_CONFIG; }
+      const res = await fetch(GIST_RAW_URL);
+      if (!res.ok) throw new Error('Không thể tải config từ Gist');
+      currentConfig = await res.json();
+    } catch (e) {
+      console.warn('Tải config từ Gist thất bại, dùng mặc định:', e);
+      currentConfig = { ...DEFAULT_CONFIG };
+    }
+    applyConfig(currentConfig);
   }
 
-  function saveSystemConfigToStorage(config) {
-    localStorage.setItem('gec_system_config', JSON.stringify(config));
+  function applyConfig(cfg) {
+    document.getElementById('slogan').textContent = cfg.slogan || '';
+    document.getElementById('heroDesc').textContent = cfg.heroDesc || '';
+    document.getElementById('aboutText').textContent = cfg.aboutText || '';
+    document.getElementById('statYears').textContent = cfg.years || '';
+    document.getElementById('statTeachers').textContent = cfg.teachers || '';
+    document.getElementById('statStudents').textContent = cfg.students || '';
+    document.getElementById('contactAddress').innerHTML = '📍 ' + (cfg.address || '');
+    document.getElementById('contactPhone').innerHTML = '📞 ' + (cfg.phone || '');
+    document.getElementById('contactEmail').innerHTML = '✉️ ' + (cfg.email || '');
+    if (cfg.posts) {
+      document.getElementById('blogList').innerHTML = cfg.posts.map(p => `
+        <div class="glass-card"><div class="course-img" style="background-image:url(${p.image || 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=600'})"></div>
+        <div class="course-body"><h3>${p.title}</h3><p>${p.content.substring(0,100)}...</p><small>${p.date}</small></div></div>
+      `).join('');
+    }
+    window.botConfig = cfg.botConfig || DEFAULT_CONFIG.botConfig;
+    window.ADMIN_PASSWORD = cfg.systemConfig?.adminPassword || 'admin123';
+    window.AI_API_KEY = cfg.systemConfig?.aiApiKey || 'YOUR_OPENROUTER_API_KEY';
+    window.AI_MODEL = cfg.systemConfig?.aiModel || 'deepseek/deepseek-v4-pro';
+    window.telegramConfig = cfg.telegramConfig || { token: '', chatId: '' };
   }
 
-  let systemConfig = getSystemConfig();
-  let ADMIN_PASSWORD = systemConfig.adminPassword;
-  let AI_API_KEY = systemConfig.aiApiKey;
-  let AI_MODEL = systemConfig.aiModel;
-
-  const DEFAULT_BOT_CONFIG = {
-    systemPrompt: 'Bạn là trợ lý AI của Trung tâm Anh ngữ GEC, tư vấn khóa học IELTS, TOEIC, giao tiếp, trẻ em. Trả lời ngắn gọn, thân thiện.',
-    welcomeMessage: 'Xin chào! Tôi là trợ lý ảo GEC. Bạn cần tư vấn gì?',
-    temperature: 0.7,
-    maxTokens: 1024
-  };
-
-  function getBotConfig() {
-    try { return JSON.parse(localStorage.getItem('gec_bot_config')) || DEFAULT_BOT_CONFIG; }
-    catch(e) { return DEFAULT_BOT_CONFIG; }
-  }
-  function saveBotConfigToStorage(config) { localStorage.setItem('gec_bot_config', JSON.stringify(config)); }
-
-  function getTelegramConfig() {
-    try { return JSON.parse(localStorage.getItem('gec_telegram_config')) || {}; }
-    catch(e) { return {}; }
-  }
-  function saveTelegramConfigToStorage(config) { localStorage.setItem('gec_telegram_config', JSON.stringify(config)); }
-
-  // Hàm lưu site content (không trùng tên)
-  function storeSiteContent(c) { localStorage.setItem('gec_site', JSON.stringify(c)); }
-
-  AOS.init({ duration:750, once:true, offset:80 });
-
-  document.getElementById('menuToggle').addEventListener('click',()=>{
-    document.getElementById('menuToggle').classList.toggle('active');
-    document.getElementById('navMenu').classList.toggle('active');
-  });
-  document.querySelectorAll('#navMenu a').forEach(l=>l.addEventListener('click',()=>{
-    document.getElementById('menuToggle').classList.remove('active');
-    document.getElementById('navMenu').classList.remove('active');
-  }));
-
-  function scrollToContact(course){
-    document.getElementById('course').value = course;
-    document.getElementById('contact').scrollIntoView({behavior:'smooth'});
+  // ===== CẬP NHẬT GIST =====
+  async function pushConfigToGist() {
+    const token = getGithubToken();
+    if (!token) {
+      alert('Vui lòng nhập GitHub Token trong mục Cấu hình đồng bộ Gist.');
+      return false;
+    }
+    try {
+      const res = await fetch(GIST_API_URL, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          files: {
+            'config.json': {
+              content: JSON.stringify(currentConfig, null, 2)
+            }
+          }
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Lỗi cập nhật Gist');
+      }
+      return true;
+    } catch (e) {
+      alert('Lỗi đồng bộ Gist: ' + e.message);
+      return false;
+    }
   }
 
-  // ===== KÉO THẢ NÚT CHAT =====
+  // ===== ADMIN PANEL FUNCTIONS =====
+  function login() {
+    if (document.getElementById('adminPassword').value === window.ADMIN_PASSWORD) {
+      sessionStorage.setItem('admin_logged', 'true');
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('adminContent').style.display = 'block';
+      loadAdminData();
+    } else alert('Sai mật khẩu');
+  }
+
+  function logout() { sessionStorage.removeItem('admin_logged'); window.location.hash = '#'; location.reload(); }
+
+  function loadAdminData() {
+    document.getElementById('editSlogan').value = currentConfig.slogan || '';
+    document.getElementById('editHeroDesc').value = currentConfig.heroDesc || '';
+    document.getElementById('editAboutText').value = currentConfig.aboutText || '';
+    document.getElementById('editYears').value = currentConfig.years || '';
+    document.getElementById('editTeachers').value = currentConfig.teachers || '';
+    document.getElementById('editStudents').value = currentConfig.students || '';
+    document.getElementById('editAddress').value = currentConfig.address || '';
+    document.getElementById('editPhone').value = currentConfig.phone || '';
+    document.getElementById('editEmail').value = currentConfig.email || '';
+    document.getElementById('aiSystemPrompt').value = currentConfig.botConfig?.systemPrompt || '';
+    document.getElementById('aiWelcome').value = currentConfig.botConfig?.welcomeMessage || '';
+    document.getElementById('aiTemperature').value = currentConfig.botConfig?.temperature || 0.7;
+    document.getElementById('aiMaxTokens').value = currentConfig.botConfig?.maxTokens || 1024;
+    document.getElementById('telegramToken').value = currentConfig.telegramConfig?.token || '';
+    document.getElementById('telegramChatId').value = currentConfig.telegramConfig?.chatId || '';
+    document.getElementById('newApiKey').value = currentConfig.systemConfig?.aiApiKey || '';
+    document.getElementById('newAiModel').value = currentConfig.systemConfig?.aiModel || '';
+    document.getElementById('newAdminPassword').value = '';
+    document.getElementById('githubToken').value = getGithubToken();
+    const posts = currentConfig.posts || [];
+    document.getElementById('postList').innerHTML = posts.map((p, i) => `
+      <div style="margin:8px 0; background:rgba(255,255,255,0.1); padding:8px; border-radius:12px;">
+        <strong>${p.title}</strong>
+        <button class="btn" onclick="deletePost(${i})" style="padding:4px 12px;">Xóa</button>
+      </div>
+    `).join('');
+  }
+
+  function saveGistConfig() {
+    const token = document.getElementById('githubToken').value.trim();
+    if (!token) return alert('Vui lòng nhập GitHub Token');
+    setGithubToken(token);
+    loadConfigFromGist().then(() => {
+      loadAdminData();
+      alert('Đã lưu token và tải cấu hình từ Gist!');
+    });
+  }
+
+  async function saveSiteContent() {
+    currentConfig.slogan = document.getElementById('editSlogan').value;
+    currentConfig.heroDesc = document.getElementById('editHeroDesc').value;
+    currentConfig.aboutText = document.getElementById('editAboutText').value;
+    currentConfig.years = document.getElementById('editYears').value;
+    currentConfig.teachers = document.getElementById('editTeachers').value;
+    currentConfig.students = document.getElementById('editStudents').value;
+    currentConfig.address = document.getElementById('editAddress').value;
+    currentConfig.phone = document.getElementById('editPhone').value;
+    currentConfig.email = document.getElementById('editEmail').value;
+    if (await pushConfigToGist()) {
+      applyConfig(currentConfig);
+      alert('Đã lưu và đồng bộ!');
+    }
+  }
+
+  async function savePost() {
+    const title = document.getElementById('postTitle').value.trim();
+    const content = document.getElementById('postContent').value.trim();
+    const image = document.getElementById('postImage').value.trim();
+    if (!title || !content) return alert('Nhập đủ');
+    if (!currentConfig.posts) currentConfig.posts = [];
+    currentConfig.posts.push({ title, content, image, date: new Date().toLocaleDateString('vi-VN') });
+    if (await pushConfigToGist()) {
+      applyConfig(currentConfig);
+      document.getElementById('postTitle').value = '';
+      document.getElementById('postContent').value = '';
+      document.getElementById('postImage').value = '';
+      loadAdminData();
+    }
+  }
+
+  async function deletePost(index) {
+    currentConfig.posts.splice(index, 1);
+    if (await pushConfigToGist()) {
+      applyConfig(currentConfig);
+      loadAdminData();
+    }
+  }
+
+  async function saveBotConfig() {
+    currentConfig.botConfig = {
+      systemPrompt: document.getElementById('aiSystemPrompt').value.trim(),
+      welcomeMessage: document.getElementById('aiWelcome').value.trim(),
+      temperature: parseFloat(document.getElementById('aiTemperature').value) || 0.7,
+      maxTokens: parseInt(document.getElementById('aiMaxTokens').value) || 1024
+    };
+    if (await pushConfigToGist()) {
+      applyConfig(currentConfig);
+      alert('Đã lưu cấu hình AI!');
+    }
+  }
+
+  async function saveTelegramConfig() {
+    currentConfig.telegramConfig = {
+      token: document.getElementById('telegramToken').value.trim(),
+      chatId: document.getElementById('telegramChatId').value.trim()
+    };
+    if (await pushConfigToGist()) {
+      applyConfig(currentConfig);
+      alert('Đã lưu cấu hình Telegram!');
+    }
+  }
+
+  async function saveSystemConfig() {
+    const newPassword = document.getElementById('newAdminPassword').value.trim();
+    const newApiKey = document.getElementById('newApiKey').value.trim();
+    const newModel = document.getElementById('newAiModel').value.trim();
+    currentConfig.systemConfig = {
+      adminPassword: newPassword || currentConfig.systemConfig.adminPassword,
+      aiApiKey: newApiKey || currentConfig.systemConfig.aiApiKey,
+      aiModel: newModel || currentConfig.systemConfig.aiModel
+    };
+    if (await pushConfigToGist()) {
+      applyConfig(currentConfig);
+      alert('Đã lưu cấu hình hệ thống. Trang sẽ tải lại để áp dụng.');
+      location.reload();
+    }
+  }
+
+  async function generateAIContent() {
+    if (window.AI_API_KEY === 'YOUR_OPENROUTER_API_KEY') return alert('Vui lòng cấu hình OpenRouter API Key.');
+    const topic = prompt('Nhập chủ đề bài viết:');
+    if (!topic) return;
+    const config = window.botConfig || DEFAULT_CONFIG.botConfig;
+    try {
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${window.AI_API_KEY}`,
+          'HTTP-Referer': window.location.href,
+          'X-Title': 'GEC English Center'
+        },
+        body: JSON.stringify({
+          model: window.AI_MODEL,
+          messages: [
+            { role: 'system', content: 'Viết bài giới thiệu ngắn gọn cho trung tâm Anh ngữ.' },
+            { role: 'user', content: `Chủ đề: ${topic}` }
+          ],
+          temperature: config.temperature || 0.7,
+          max_tokens: 2048
+        })
+      });
+      const data = await res.json();
+      const text = data.choices?.[0]?.message?.content || '';
+      document.getElementById('postContent').value = text;
+    } catch (e) {
+      alert('Lỗi tạo nội dung: ' + e.message);
+    }
+  }
+
+  // ===== CHATBOT KÉO THẢ =====
   const chatToggle = document.getElementById('chatbotToggle');
-  let isDraggingToggle = false, toggleStartX = 0, toggleStartY = 0, toggleStartLeft = 0, toggleStartTop = 0;
+  const chatWindow = document.getElementById('chatbotWindow');
+  const chatHeader = document.getElementById('chatbotHeader');
+  let isDraggingToggle = false, toggleStartX, toggleStartY, toggleStartLeft, toggleStartTop;
+  let isDraggingWindow = false, winStartX, winStartY, winStartLeft, winStartTop;
   const DRAG_THRESHOLD = 5;
 
   function setDefaultTogglePosition() {
     if (!chatToggle.style.left || !chatToggle.style.top) {
       chatToggle.style.left = (window.innerWidth - 80) + 'px';
       chatToggle.style.top = (window.innerHeight - 80) + 'px';
+    }
+  }
+  function setDefaultWindowPosition() {
+    if (!chatWindow.style.left || !chatWindow.style.top) {
+      chatWindow.style.left = Math.max(0, window.innerWidth - 380) + 'px';
+      chatWindow.style.top = Math.max(0, window.innerHeight - 540) + 'px';
     }
   }
 
@@ -413,12 +638,13 @@
     e.preventDefault();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    const dx = clientX - toggleStartX, dy = clientY - toggleStartY;
-    let newLeft = toggleStartLeft + dx, newTop = toggleStartTop + dy;
+    let newLeft = toggleStartLeft + (clientX - toggleStartX);
+    let newTop = toggleStartTop + (clientY - toggleStartY);
     const size = 58;
     newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - size));
     newTop = Math.max(0, Math.min(newTop, window.innerHeight - size));
-    chatToggle.style.left = newLeft + 'px'; chatToggle.style.top = newTop + 'px';
+    chatToggle.style.left = newLeft + 'px';
+    chatToggle.style.top = newTop + 'px';
   }
 
   function stopDragToggle(e) {
@@ -433,22 +659,6 @@
     document.removeEventListener('touchmove', onDragToggle);
     document.removeEventListener('touchend', stopDragToggle);
     if (distance < DRAG_THRESHOLD) toggleChatbot();
-  }
-
-  chatToggle.addEventListener('mousedown', startDragToggle);
-  chatToggle.addEventListener('touchstart', startDragToggle, { passive: false });
-
-  // ===== KÉO THẢ CỬA SỔ CHAT =====
-  const chatWindow = document.getElementById('chatbotWindow');
-  const chatHeader = document.getElementById('chatbotHeader');
-  let isDraggingWindow = false, winStartX = 0, winStartY = 0, winStartLeft = 0, winStartTop = 0;
-
-  function setDefaultWindowPosition() {
-    if (!chatWindow.style.left || !chatWindow.style.top) {
-      const vw = window.innerWidth, vh = window.innerHeight;
-      chatWindow.style.left = Math.max(0, vw - 380) + 'px';
-      chatWindow.style.top = Math.max(0, vh - 540) + 'px';
-    }
   }
 
   function startDragWindow(e) {
@@ -472,12 +682,13 @@
     e.preventDefault();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    const dx = clientX - winStartX, dy = clientY - winStartY;
-    let newLeft = winStartLeft + dx, newTop = winStartTop + dy;
+    let newLeft = winStartLeft + (clientX - winStartX);
+    let newTop = winStartTop + (clientY - winStartY);
     const winW = chatWindow.offsetWidth, winH = chatWindow.offsetHeight;
     newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - winW));
     newTop = Math.max(0, Math.min(newTop, window.innerHeight - winH));
-    chatWindow.style.left = newLeft + 'px'; chatWindow.style.top = newTop + 'px';
+    chatWindow.style.left = newLeft + 'px';
+    chatWindow.style.top = newTop + 'px';
   }
 
   function stopDragWindow() {
@@ -490,199 +701,79 @@
     document.removeEventListener('touchend', stopDragWindow);
   }
 
+  chatToggle.addEventListener('mousedown', startDragToggle);
+  chatToggle.addEventListener('touchstart', startDragToggle, { passive: false });
   chatHeader.addEventListener('mousedown', startDragWindow);
   chatHeader.addEventListener('touchstart', startDragWindow, { passive: false });
 
   let welcomeShown = false;
-  function toggleChatbot(){
+  function toggleChatbot() {
     if (!chatWindow.classList.contains('open')) setDefaultWindowPosition();
     chatWindow.classList.toggle('open');
     if (chatWindow.classList.contains('open') && !welcomeShown) {
-      const config = getBotConfig();
-      appendMessage('bot', config.welcomeMessage);
+      const config = window.botConfig || DEFAULT_CONFIG.botConfig;
+      appendMessage('bot', config.welcomeMessage || 'Xin chào!');
       welcomeShown = true;
     }
   }
 
-  async function callOpenRouter(messages, temperature, maxTokens) {
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${AI_API_KEY}`,'HTTP-Referer':window.location.href,'X-Title':'GEC'},
-      body:JSON.stringify({model:AI_MODEL, messages, temperature, max_tokens:maxTokens})
-    });
-    if(!res.ok){ const e=await res.json(); throw new Error(e.error?.message||'Lỗi'); }
-    const d=await res.json(); return d.choices[0].message.content;
-  }
-
-  async function sendChat(){
-    const input=document.getElementById('chatInput');
-    const msg=input.value.trim();
-    if(!msg)return;
-    appendMessage('user',msg); input.value='';
-    if(AI_API_KEY==='YOUR_OPENROUTER_API_KEY'){appendMessage('bot','⚠️ Thay API key');return;}
-    const config=getBotConfig();
-    appendMessage('bot','Đang suy nghĩ...');
-    try{
-      const reply=await callOpenRouter([{role:'system',content:config.systemPrompt},{role:'user',content:msg}],config.temperature,config.maxTokens);
+  async function sendChat() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+    appendMessage('user', msg);
+    input.value = '';
+    if (!window.AI_API_KEY || window.AI_API_KEY === 'YOUR_OPENROUTER_API_KEY') {
+      appendMessage('bot', '⚠️ Vui lòng cấu hình OpenRouter API Key.');
+      return;
+    }
+    const config = window.botConfig || DEFAULT_CONFIG.botConfig;
+    appendMessage('bot', 'Đang suy nghĩ...');
+    try {
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${window.AI_API_KEY}`,
+          'HTTP-Referer': window.location.href,
+          'X-Title': 'GEC English Center'
+        },
+        body: JSON.stringify({
+          model: window.AI_MODEL,
+          messages: [
+            { role: 'system', content: config.systemPrompt },
+            { role: 'user', content: msg }
+          ],
+          temperature: config.temperature || 0.7,
+          max_tokens: config.maxTokens || 1024
+        })
+      });
+      const data = await res.json();
+      const reply = data.choices?.[0]?.message?.content || 'Xin lỗi, tôi không hiểu.';
       document.querySelector('#chatMessages .msg.bot:last-child').remove();
-      appendMessage('bot',reply);
-    }catch(e){ document.querySelector('#chatMessages .msg.bot:last-child').remove(); appendMessage('bot','Lỗi: '+e.message); }
-  }
-
-  function appendMessage(role,text){
-    const d=document.createElement('div'); d.className=`msg ${role}`; d.textContent=text;
-    document.getElementById('chatMessages').appendChild(d); d.scrollIntoView({behavior:'smooth'});
-  }
-  document.getElementById('chatInput').addEventListener('keypress',e=>{ if(e.key==='Enter') sendChat(); });
-
-  // ===== ADMIN =====
-  function getPosts(){ return JSON.parse(localStorage.getItem('gec_posts')||'[]'); }
-  function savePosts(posts){ localStorage.setItem('gec_posts', JSON.stringify(posts)); }
-  function getSiteContent(){ return JSON.parse(localStorage.getItem('gec_site')||'{}'); }
-  function loadBlog(){
-    const posts=getPosts();
-    document.getElementById('blogList').innerHTML=posts.map(p=>`
-      <div class="glass-card"><div class="course-img" style="background-image:url(${p.image||'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=600'})"></div>
-      <div class="course-body"><h3>${p.title}</h3><p>${p.content.substring(0,100)}...</p><small>${p.date}</small></div></div>
-    `).join('');
-  }
-  function loadSiteContent(){
-    const sc=getSiteContent();
-    if(sc.slogan) document.getElementById('slogan').textContent=sc.slogan;
-    if(sc.heroDesc) document.getElementById('heroDesc').textContent=sc.heroDesc;
-    if(sc.aboutText) document.getElementById('aboutText').textContent=sc.aboutText;
-    if(sc.years) document.getElementById('statYears').textContent=sc.years;
-    if(sc.teachers) document.getElementById('statTeachers').textContent=sc.teachers;
-    if(sc.students) document.getElementById('statStudents').textContent=sc.students;
-    if(sc.address) document.getElementById('contactAddress').innerHTML='📍 '+sc.address;
-    if(sc.phone) document.getElementById('contactPhone').innerHTML='📞 '+sc.phone;
-    if(sc.email) document.getElementById('contactEmail').innerHTML='✉️ '+sc.email;
-  }
-  function checkAdminHash(){
-    if(window.location.hash==='#admin'){
-      document.getElementById('landingPage').style.display='none';
-      document.getElementById('adminPanel').classList.add('active');
-      if(sessionStorage.getItem('admin_logged')==='true'){
-        document.getElementById('loginForm').style.display='none';
-        document.getElementById('adminContent').style.display='block';
-        loadAdminData();
-      }
-    } else {
-      document.getElementById('landingPage').style.display='block';
-      document.getElementById('adminPanel').classList.remove('active');
+      appendMessage('bot', reply);
+    } catch (e) {
+      document.querySelector('#chatMessages .msg.bot:last-child').remove();
+      appendMessage('bot', 'Lỗi kết nối: ' + e.message);
     }
   }
-  window.addEventListener('hashchange',checkAdminHash);
-  window.addEventListener('load',()=>{ loadBlog(); loadSiteContent(); checkAdminHash(); welcomeShown=false; setDefaultTogglePosition(); });
-  function login(){
-    if(document.getElementById('adminPassword').value===ADMIN_PASSWORD){
-      sessionStorage.setItem('admin_logged','true');
-      document.getElementById('loginForm').style.display='none';
-      document.getElementById('adminContent').style.display='block';
-      loadAdminData();
-    } else alert('Sai mật khẩu');
-  }
-  function logout(){ sessionStorage.removeItem('admin_logged'); window.location.hash='#'; location.reload(); }
-  function loadAdminData(){
-    const posts=getPosts();
-    document.getElementById('postList').innerHTML=posts.map((p,i)=>`<div style="margin:8px 0; background:rgba(255,255,255,0.1); padding:8px; border-radius:12px;">
-      <strong>${p.title}</strong> <button class="btn" onclick="editPost(${i})" style="padding:4px 12px;">Sửa</button>
-      <button class="btn" onclick="deletePost(${i})" style="padding:4px 12px;">Xóa</button>
-    </div>`).join('');
-    const sc=getSiteContent();
-    document.getElementById('editSlogan').value=sc.slogan||'';
-    document.getElementById('editHeroDesc').value=sc.heroDesc||'';
-    document.getElementById('editAboutText').value=sc.aboutText||'';
-    document.getElementById('editYears').value=sc.years||'';
-    document.getElementById('editTeachers').value=sc.teachers||'';
-    document.getElementById('editStudents').value=sc.students||'';
-    document.getElementById('editAddress').value=sc.address||'';
-    document.getElementById('editPhone').value=sc.phone||'';
-    document.getElementById('editEmail').value=sc.email||'';
-    const bc=getBotConfig();
-    document.getElementById('aiSystemPrompt').value=bc.systemPrompt||'';
-    document.getElementById('aiWelcome').value=bc.welcomeMessage||'';
-    document.getElementById('aiTemperature').value=bc.temperature||0.7;
-    document.getElementById('aiMaxTokens').value=bc.maxTokens||1024;
-    const tcfg=getTelegramConfig();
-    document.getElementById('telegramToken').value=tcfg.token||'';
-    document.getElementById('telegramChatId').value=tcfg.chatId||'';
-    const sysCfg = getSystemConfig();
-    document.getElementById('newAdminPassword').value = '';
-    document.getElementById('newApiKey').value = sysCfg.aiApiKey;
-    document.getElementById('newAiModel').value = sysCfg.aiModel;
-  }
-  let editingIndex=-1;
-  function savePost(){
-    const title=document.getElementById('postTitle').value.trim();
-    const content=document.getElementById('postContent').value.trim();
-    const image=document.getElementById('postImage').value.trim();
-    if(!title||!content)return alert('Nhập đủ');
-    const posts=getPosts();
-    const post={title,content,image,date:new Date().toLocaleDateString('vi-VN')};
-    if(editingIndex>=0) posts[editingIndex]=post; else posts.push(post);
-    savePosts(posts); editingIndex=-1;
-    document.getElementById('postTitle').value=''; document.getElementById('postContent').value=''; document.getElementById('postImage').value='';
-    loadAdminData(); loadBlog();
-  }
-  function editPost(i){ const p=getPosts()[i]; document.getElementById('postTitle').value=p.title; document.getElementById('postContent').value=p.content; document.getElementById('postImage').value=p.image||''; editingIndex=i; }
-  function deletePost(i){ const posts=getPosts(); posts.splice(i,1); savePosts(posts); loadAdminData(); loadBlog(); }
-  async function generateAIContent(){
-    if(AI_API_KEY==='YOUR_OPENROUTER_API_KEY')return alert('Thay API key');
-    const topic=prompt('Chủ đề:');
-    if(!topic)return;
-    const config=getBotConfig();
-    try{ const c=await callOpenRouter([{role:'system',content:'Viết bài ngắn cho trung tâm Anh ngữ.'},{role:'user',content:'Chủ đề: '+topic}],config.temperature,2048); document.getElementById('postContent').value=c; }
-    catch(e){ alert('Lỗi: '+e.message); }
-  }
-  // Sửa lỗi: đổi tên hàm lưu trữ thành storeSiteContent
-  function saveSiteContent(){
-    const content={
-      slogan:document.getElementById('editSlogan').value, heroDesc:document.getElementById('editHeroDesc').value,
-      aboutText:document.getElementById('editAboutText').value, years:document.getElementById('editYears').value,
-      teachers:document.getElementById('editTeachers').value, students:document.getElementById('editStudents').value,
-      address:document.getElementById('editAddress').value, phone:document.getElementById('editPhone').value,
-      email:document.getElementById('editEmail').value
-    };
-    storeSiteContent(content);
-    loadSiteContent();
-    alert('Đã lưu!');
-  }
-  function saveBotConfig(){
-    const config={
-      systemPrompt:document.getElementById('aiSystemPrompt').value.trim(),
-      welcomeMessage:document.getElementById('aiWelcome').value.trim(),
-      temperature:parseFloat(document.getElementById('aiTemperature').value)||0.7,
-      maxTokens:parseInt(document.getElementById('aiMaxTokens').value)||1024
-    };
-    saveBotConfigToStorage(config); welcomeShown=false; alert('Đã lưu cấu hình AI!');
-  }
-  function saveTelegramConfig(){
-    const token = document.getElementById('telegramToken').value.trim();
-    const chatId = document.getElementById('telegramChatId').value.trim();
-    saveTelegramConfigToStorage({ token, chatId });
-    alert('Đã lưu cấu hình Telegram!');
+
+  function appendMessage(role, text) {
+    const div = document.createElement('div');
+    div.className = `msg ${role}`;
+    div.textContent = text;
+    document.getElementById('chatMessages').appendChild(div);
+    div.scrollIntoView({ behavior: 'smooth' });
   }
 
-  function saveSystemConfig() {
-    const newPassword = document.getElementById('newAdminPassword').value.trim();
-    const newApiKey = document.getElementById('newApiKey').value.trim();
-    const newModel = document.getElementById('newAiModel').value.trim();
+  document.getElementById('chatInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') sendChat();
+  });
 
-    const currentConfig = getSystemConfig();
-    const updatedConfig = {
-      adminPassword: newPassword || currentConfig.adminPassword,
-      aiApiKey: newApiKey || currentConfig.aiApiKey,
-      aiModel: newModel || currentConfig.aiModel
-    };
-    saveSystemConfigToStorage(updatedConfig);
-    alert('Đã lưu cấu hình hệ thống. Trang sẽ tải lại để áp dụng.');
-    location.reload();
-  }
-
+  // ===== FORM LIÊN HỆ & TELEGRAM =====
   async function sendTelegramNotification(name, phone, email, course, message) {
-    const cfg = getTelegramConfig();
-    if (!cfg.token || !cfg.chatId) return false;
+    const cfg = window.telegramConfig;
+    if (!cfg?.token || !cfg?.chatId) return;
     const text = `📢 ĐĂNG KÝ TƯ VẤN MỚI\n\n👤 Họ tên: ${name}\n📞 SĐT: ${phone}\n📧 Email: ${email || 'Không có'}\n📚 Khóa học: ${course || 'Chưa chọn'}\n💬 Nội dung: ${message || 'Không có'}`;
     try {
       await fetch(`https://api.telegram.org/bot${cfg.token}/sendMessage`, {
@@ -690,11 +781,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chat_id: cfg.chatId, text })
       });
-      return true;
-    } catch (e) {
-      console.warn('Gửi Telegram thất bại:', e);
-      return false;
-    }
+    } catch (e) { console.warn('Gửi Telegram thất bại:', e); }
   }
 
   document.getElementById('contactForm').addEventListener('submit', async (e) => {
@@ -709,6 +796,45 @@
     alert('GEC đã nhận được thông tin của bạn!');
     document.getElementById('contactForm').reset();
   });
+
+  // ===== KHỞI ĐỘNG =====
+  function checkAdminHash() {
+    if (window.location.hash === '#admin') {
+      document.getElementById('landingPage').style.display = 'none';
+      document.getElementById('adminPanel').classList.add('active');
+      if (sessionStorage.getItem('admin_logged') === 'true') {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('adminContent').style.display = 'block';
+        loadAdminData();
+      }
+    } else {
+      document.getElementById('landingPage').style.display = 'block';
+      document.getElementById('adminPanel').classList.remove('active');
+    }
+  }
+  window.addEventListener('hashchange', checkAdminHash);
+
+  window.addEventListener('load', async () => {
+    AOS.init({ duration: 750, once: true, offset: 80 });
+    await loadConfigFromGist();
+    checkAdminHash();
+    setDefaultTogglePosition();
+  });
+
+  function scrollToContact(course) {
+    document.getElementById('course').value = course;
+    document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // Mobile menu
+  document.getElementById('menuToggle').addEventListener('click', () => {
+    document.getElementById('menuToggle').classList.toggle('active');
+    document.getElementById('navMenu').classList.toggle('active');
+  });
+  document.querySelectorAll('#navMenu a').forEach(l => l.addEventListener('click', () => {
+    document.getElementById('menuToggle').classList.remove('active');
+    document.getElementById('navMenu').classList.remove('active');
+  }));
 </script>
 </body>
 </html>
