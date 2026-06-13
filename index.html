@@ -7,6 +7,7 @@
   <title>GEC | Trung tâm Tiếng Anh Kính Lỏng + AI + Gist</title>
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <style>
+    /* ... toàn bộ CSS giữ nguyên từ code trước ... */
     :root {
       --primary: #0a1f5c;
       --secondary: #f0b90b;
@@ -297,8 +298,8 @@
         <input type="password" id="newAdminPassword" placeholder="Nhập mật khẩu mới (nếu muốn đổi)">
         <label>OpenRouter API Key</label>
         <input type="text" id="newApiKey" placeholder="sk-or-v1-...">
-        <label>Model AI</label>
-        <input type="text" id="newAiModel" placeholder="deepseek/deepseek-v4-pro">
+        <label>Model AI (ví dụ: deepseek/deepseek-chat hoặc openai/gpt-3.5-turbo)</label>
+        <input type="text" id="newAiModel" placeholder="deepseek/deepseek-chat">
         <button class="btn" onclick="saveSystemConfig()">Lưu cấu hình hệ thống</button>
       </div>
       <button class="btn" onclick="logout()">Đăng xuất</button>
@@ -329,7 +330,6 @@
   const GIST_RAW_URL = `https://gist.githubusercontent.com/Nguyentienmanh200/${GIST_ID}/raw/config.json`;
   const GIST_API_URL = `https://api.github.com/gists/${GIST_ID}`;
 
-  // Cấu hình mặc định (dùng khi chưa có Gist hoặc lỗi)
   const DEFAULT_CONFIG = {
     slogan: "GEC – Chắp cánh tương lai bằng tiếng Anh",
     heroDesc: "Khơi mở tiềm năng, chinh phục tiếng Anh cùng đội ngũ giáo viên xuất sắc và lộ trình cá nhân hóa.",
@@ -351,13 +351,12 @@
     systemConfig: {
       adminPassword: "admin123",
       aiApiKey: "YOUR_OPENROUTER_API_KEY",
-      aiModel: "deepseek/deepseek-v4-pro"
+      aiModel: "deepseek/deepseek-chat"
     }
   };
 
   let currentConfig = { ...DEFAULT_CONFIG };
 
-  // Token GitHub được lưu trong localStorage (chỉ trên máy admin)
   function getGithubToken() {
     return localStorage.getItem('gec_github_token') || '';
   }
@@ -365,7 +364,6 @@
     localStorage.setItem('gec_github_token', token);
   }
 
-  // ===== LOAD CONFIG TỪ GIST =====
   async function loadConfigFromGist() {
     try {
       const res = await fetch(GIST_RAW_URL);
@@ -397,11 +395,10 @@
     window.botConfig = cfg.botConfig || DEFAULT_CONFIG.botConfig;
     window.ADMIN_PASSWORD = cfg.systemConfig?.adminPassword || 'admin123';
     window.AI_API_KEY = cfg.systemConfig?.aiApiKey || 'YOUR_OPENROUTER_API_KEY';
-    window.AI_MODEL = cfg.systemConfig?.aiModel || 'deepseek/deepseek-v4-pro';
+    window.AI_MODEL = cfg.systemConfig?.aiModel || 'deepseek/deepseek-chat';
     window.telegramConfig = cfg.telegramConfig || { token: '', chatId: '' };
   }
 
-  // ===== CẬP NHẬT GIST =====
   async function pushConfigToGist() {
     const token = getGithubToken();
     if (!token) {
@@ -434,7 +431,7 @@
     }
   }
 
-  // ===== ADMIN PANEL FUNCTIONS =====
+  // ===== ADMIN =====
   function login() {
     if (document.getElementById('adminPassword').value === window.ADMIN_PASSWORD) {
       sessionStorage.setItem('admin_logged', 'true');
@@ -590,6 +587,9 @@
         })
       });
       const data = await res.json();
+      if (data.error) {
+        throw new Error(data.error.message || 'Lỗi API');
+      }
       const text = data.choices?.[0]?.message?.content || '';
       document.getElementById('postContent').value = text;
     } catch (e) {
@@ -724,7 +724,7 @@
     appendMessage('user', msg);
     input.value = '';
     if (!window.AI_API_KEY || window.AI_API_KEY === 'YOUR_OPENROUTER_API_KEY') {
-      appendMessage('bot', '⚠️ Vui lòng cấu hình OpenRouter API Key.');
+      appendMessage('bot', '⚠️ Vui lòng cấu hình OpenRouter API Key trong Admin.');
       return;
     }
     const config = window.botConfig || DEFAULT_CONFIG.botConfig;
@@ -749,12 +749,23 @@
         })
       });
       const data = await res.json();
-      const reply = data.choices?.[0]?.message?.content || 'Xin lỗi, tôi không hiểu.';
-      document.querySelector('#chatMessages .msg.bot:last-child').remove();
-      appendMessage('bot', reply);
+      // Xóa tin nhắn "đang suy nghĩ"
+      const thinkingMsg = document.querySelector('#chatMessages .msg.bot:last-child');
+      if (thinkingMsg) thinkingMsg.remove();
+
+      if (data.error) {
+        // Hiển thị lỗi chi tiết từ API
+        appendMessage('bot', `❌ Lỗi API: ${data.error.message || JSON.stringify(data.error)}`);
+      } else if (data.choices && data.choices[0]) {
+        const reply = data.choices[0].message.content;
+        appendMessage('bot', reply);
+      } else {
+        appendMessage('bot', '❌ Không nhận được phản hồi hợp lệ từ AI.');
+      }
     } catch (e) {
-      document.querySelector('#chatMessages .msg.bot:last-child').remove();
-      appendMessage('bot', 'Lỗi kết nối: ' + e.message);
+      const thinkingMsg = document.querySelector('#chatMessages .msg.bot:last-child');
+      if (thinkingMsg) thinkingMsg.remove();
+      appendMessage('bot', `❌ Lỗi kết nối: ${e.message}`);
     }
   }
 
@@ -770,7 +781,7 @@
     if (e.key === 'Enter') sendChat();
   });
 
-  // ===== FORM LIÊN HỆ & TELEGRAM =====
+  // ===== FORM LIÊN HỆ =====
   async function sendTelegramNotification(name, phone, email, course, message) {
     const cfg = window.telegramConfig;
     if (!cfg?.token || !cfg?.chatId) return;
@@ -826,7 +837,6 @@
     document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
   }
 
-  // Mobile menu
   document.getElementById('menuToggle').addEventListener('click', () => {
     document.getElementById('menuToggle').classList.toggle('active');
     document.getElementById('navMenu').classList.toggle('active');
