@@ -13,6 +13,7 @@
       --glass-bg: rgba(255, 255, 255, 0.07);
       --glass-border: rgba(255, 255, 255, 0.18);
       --shadow: 0 15px 35px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      --shadow-hover: 0 25px 45px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(255, 255, 255, 0.25);
       --radius: 24px;
       --transition: 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.2);
       --font: 'Segoe UI', 'Inter', system-ui, sans-serif;
@@ -50,6 +51,7 @@
       -webkit-backdrop-filter: blur(28px) saturate(180%);
       border:1px solid var(--glass-border); border-radius:100px;
       z-index:1000; padding:12px 24px; box-shadow:0 12px 30px rgba(0,0,0,0.4);
+      transition: var(--transition);
     }
     .header-inner { display:flex; align-items:center; justify-content:space-between; }
     .logo {
@@ -99,13 +101,26 @@
       border:1px solid var(--glass-border); border-radius:var(--radius); box-shadow:var(--shadow);
       transition:var(--transition); overflow:hidden;
     }
-    .glass-card:hover { transform:translateY(-6px); border-color:rgba(255,255,255,0.35); }
+    .glass-card:hover { transform:translateY(-6px); box-shadow:var(--shadow-hover); border-color:rgba(255,255,255,0.35); }
+    .about-grid { display:grid; grid-template-columns:1fr 1fr; gap:45px; align-items:center; }
+    .about-image img { width:100%; border-radius:32px; box-shadow:0 20px 50px rgba(0,0,0,0.5); object-fit:cover; }
+    .about-stats { display:flex; gap:30px; flex-wrap:wrap; margin-top:20px; }
+    .stat-item { text-align:center; }
+    .stat-number { font-size:2rem; font-weight:800; color:var(--secondary); }
     .courses-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:28px; }
     .course-img { height:180px; background-size:cover; background-position:center; border-radius:24px 24px 0 0; }
     .course-body { padding:22px 20px; }
     .teachers-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:28px; }
     .teacher-card { text-align:center; padding:28px 20px; }
     .teacher-avatar { width:100px; height:100px; border-radius:50%; object-fit:cover; margin:0 auto 14px; border:3px solid rgba(255,255,255,0.4); }
+    .achievements { background: var(--primary); text-align:center; }
+    .achievements-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:24px; text-align:center; }
+    .achieve-number { font-size:2.4rem; font-weight:900; color:var(--secondary); }
+    .testimonials-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:24px; }
+    .testimonial-card { padding:28px; position:relative; }
+    .testimonial-card::before { content:'"'; font-size:4rem; color:var(--secondary); opacity:0.4; position:absolute; top:5px; left:18px; line-height:1; }
+    .testimonial-author { display:flex; align-items:center; gap:12px; margin-top:16px; }
+    .testimonial-author img { width:42px; height:42px; border-radius:50%; object-fit:cover; }
     .contact-grid { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:start; }
     .contact-form input, .contact-form select, .contact-form textarea {
       width:100%; padding:13px 18px; background:rgba(255,255,255,0.1); backdrop-filter:blur(12px);
@@ -169,7 +184,7 @@
       nav { position:fixed; top:0; right:-100%; width:270px; height:100vh; background:rgba(5,14,35,0.9); backdrop-filter:blur(35px); padding:110px 28px 30px; transition:0.45s; border-left:1px solid rgba(255,255,255,0.15); z-index:999; }
       nav.active { right:0; }
       nav ul { flex-direction:column; gap:26px; align-items:flex-start; }
-      .contact-grid, .about-grid { grid-template-columns:1fr; }
+      .about-grid, .contact-grid { grid-template-columns:1fr; }
       .hero-content { padding:40px 20px; }
       .chatbot-window { width: 300px; height: 420px; }
     }
@@ -187,6 +202,8 @@
         <li><a href="#about">Giới thiệu</a></li>
         <li><a href="#courses">Khóa học</a></li>
         <li><a href="#teachers">Giáo viên</a></li>
+        <li><a href="#achievements">Thành tích</a></li>
+        <li><a href="#testimonials">Đánh giá</a></li>
         <li><a href="#blog">Tin tức</a></li>
         <li><a href="#contact">Liên hệ</a></li>
       </ul>
@@ -196,41 +213,102 @@
 
 <!-- LANDING PAGE -->
 <div id="landingPage">
+  <!-- Hero -->
   <section class="hero">
-    <div class="hero-content" data-aos="zoom-in-up">
+    <div class="hero-content" data-aos="zoom-in-up" data-aos-duration="1000">
       <h1 id="slogan">GEC – Chắp cánh tương lai bằng tiếng Anh</h1>
       <p id="heroDesc">Khơi mở tiềm năng, chinh phục tiếng Anh cùng đội ngũ giáo viên xuất sắc và lộ trình cá nhân hóa.</p>
       <div><a href="#courses" class="btn">Khám phá khóa học</a> <a href="#contact" class="btn btn-outline">Nhận tư vấn</a></div>
     </div>
   </section>
 
-  <section id="about"><div class="container"><div class="about-grid"><div data-aos="fade-right"><img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&q=80" style="width:100%; border-radius:32px;" alt="lớp học"></div><div class="glass-card" style="padding:30px;" data-aos="fade-left"><h3>Về GEC</h3><p id="aboutText">Thành lập từ 2015, hơn 10.000 học viên thành công.</p><div class="about-stats" style="display:flex; gap:30px; margin-top:20px;"><div><span class="stat-number" id="statYears" style="font-size:2rem; font-weight:800; color:var(--secondary);">8+</span><br>Năm KN</div><div><span class="stat-number" id="statTeachers" style="font-size:2rem; font-weight:800; color:var(--secondary);">200+</span><br>Giáo viên</div><div><span class="stat-number" id="statStudents" style="font-size:2rem; font-weight:800; color:var(--secondary);">10K+</span><br>Học viên</div></div></div></div></div></section>
+  <!-- About -->
+  <section id="about">
+    <div class="container">
+      <div class="about-grid">
+        <div class="about-image" data-aos="fade-right"><img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&q=80" alt="lớp học" loading="lazy"></div>
+        <div class="glass-card" style="padding:30px;" data-aos="fade-left">
+          <h3>Về GEC English Center</h3>
+          <p id="aboutText">Thành lập từ 2015, GEC tự hào là trung tâm tiếng Anh hàng đầu với hơn 10.000 học viên đã đạt chứng chỉ quốc tế.</p>
+          <div class="about-stats">
+            <div class="stat-item"><div class="stat-number" id="statYears">8+</div><div>Năm KN</div></div>
+            <div class="stat-item"><div class="stat-number" id="statTeachers">200+</div><div>Giáo viên</div></div>
+            <div class="stat-item"><div class="stat-number" id="statStudents">10K+</div><div>Học viên</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  <section id="courses"><div class="container"><div class="section-title"><h2>Khóa học nổi bật</h2></div><div class="courses-grid">
-    <div class="glass-card"><div class="course-img" style="background-image:url(https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600)"></div><div class="course-body"><h3>IELTS</h3><p>Cam kết 6.5+</p><button class="btn" onclick="scrollToContact('IELTS')">Đăng ký</button></div></div>
-    <div class="glass-card"><div class="course-img" style="background-image:url(https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600)"></div><div class="course-body"><h3>TOEIC</h3><p>Mục tiêu 700+</p><button class="btn" onclick="scrollToContact('TOEIC')">Đăng ký</button></div></div>
-    <div class="glass-card"><div class="course-img" style="background-image:url(https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600)"></div><div class="course-body"><h3>Giao tiếp</h3><p>Phản xạ tự nhiên</p><button class="btn" onclick="scrollToContact('Tiếng Anh giao tiếp')">Đăng ký</button></div></div>
-    <div class="glass-card"><div class="course-img" style="background-image:url(https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=600)"></div><div class="course-body"><h3>Trẻ em</h3><p>4-12 tuổi</p><button class="btn" onclick="scrollToContact('Tiếng Anh trẻ em')">Đăng ký</button></div></div>
-  </div></div></section>
+  <!-- Courses -->
+  <section id="courses" style="background:#0a1628;">
+    <div class="container">
+      <div class="section-title" data-aos="fade-up"><h2>Khóa học nổi bật</h2></div>
+      <div class="courses-grid">
+        <div class="glass-card" data-aos="flip-left" data-aos-delay="0"><div class="course-img" style="background-image:url(https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600)"></div><div class="course-body"><h3>IELTS</h3><p>Cam kết 6.5+</p><button class="btn" onclick="scrollToContact('IELTS')">Đăng ký</button></div></div>
+        <div class="glass-card" data-aos="flip-left" data-aos-delay="100"><div class="course-img" style="background-image:url(https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600)"></div><div class="course-body"><h3>TOEIC</h3><p>Mục tiêu 700+</p><button class="btn" onclick="scrollToContact('TOEIC')">Đăng ký</button></div></div>
+        <div class="glass-card" data-aos="flip-left" data-aos-delay="200"><div class="course-img" style="background-image:url(https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600)"></div><div class="course-body"><h3>Giao tiếp</h3><p>Phản xạ tự nhiên</p><button class="btn" onclick="scrollToContact('Tiếng Anh giao tiếp')">Đăng ký</button></div></div>
+        <div class="glass-card" data-aos="flip-left" data-aos-delay="300"><div class="course-img" style="background-image:url(https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=600)"></div><div class="course-body"><h3>Trẻ em</h3><p>4-12 tuổi</p><button class="btn" onclick="scrollToContact('Tiếng Anh trẻ em')">Đăng ký</button></div></div>
+      </div>
+    </div>
+  </section>
 
-  <section id="teachers"><div class="container"><div class="section-title"><h2>Đội ngũ giáo viên</h2></div><div class="teachers-grid">
-    <div class="glass-card teacher-card"><img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop" class="teacher-avatar"><h3>John Smith</h3><p>IELTS 8.5</p></div>
-    <div class="glass-card teacher-card"><img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop" class="teacher-avatar"><h3>Nguyễn Linh</h3><p>Thạc sĩ</p></div>
-  </div></div></section>
+  <!-- Teachers -->
+  <section id="teachers">
+    <div class="container">
+      <div class="section-title" data-aos="fade-up"><h2>Đội ngũ giáo viên</h2></div>
+      <div class="teachers-grid">
+        <div class="glass-card teacher-card" data-aos="zoom-in"><img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face" class="teacher-avatar" alt="Thầy John" loading="lazy"><h3>John Smith</h3><p>IELTS 8.5</p></div>
+        <div class="glass-card teacher-card" data-aos="zoom-in" data-aos-delay="100"><img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=face" class="teacher-avatar" alt="Cô Linh" loading="lazy"><h3>Nguyễn Linh</h3><p>Thạc sĩ Ngôn ngữ</p></div>
+        <div class="glass-card teacher-card" data-aos="zoom-in" data-aos-delay="200"><img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&crop=face" class="teacher-avatar" alt="Thầy David" loading="lazy"><h3>David Park</h3><p>Chuyên gia TOEIC</p></div>
+        <div class="glass-card teacher-card" data-aos="zoom-in" data-aos-delay="300"><img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop&crop=face" class="teacher-avatar" alt="Cô Mai" loading="lazy"><h3>Trần Hồng Mai</h3><p>Tiếng Anh trẻ em</p></div>
+      </div>
+    </div>
+  </section>
 
-  <section id="blog"><div class="container"><div class="section-title"><h2>Tin tức & Bài viết</h2></div><div id="blogList" class="courses-grid"></div></div></section>
+  <!-- Achievements -->
+  <section id="achievements" class="achievements">
+    <div class="container">
+      <div class="section-title" data-aos="fade-up"><h2>Thành tích học viên</h2></div>
+      <div class="achievements-grid">
+        <div class="glass-card" style="padding:28px;" data-aos="zoom-in"><div class="achieve-number">5000+</div><p>Chứng chỉ quốc tế</p></div>
+        <div class="glass-card" style="padding:28px;" data-aos="zoom-in" data-aos-delay="100"><div class="achieve-number">98%</div><p>Đạt mục tiêu</p></div>
+        <div class="glass-card" style="padding:28px;" data-aos="zoom-in" data-aos-delay="200"><div class="achieve-number">4.9/5</div><p>Đánh giá</p></div>
+        <div class="glass-card" style="padding:28px;" data-aos="zoom-in" data-aos-delay="300"><div class="achieve-number">30+</div><p>Đối tác quốc tế</p></div>
+      </div>
+    </div>
+  </section>
 
-  <section id="contact"><div class="container"><div class="section-title"><h2>Liên hệ</h2></div><div class="contact-grid">
-    <div class="glass-card" style="padding:30px;"><h3>Thông tin</h3><p id="contactAddress">📍 123 Nguyễn Huệ, Q.1</p><p id="contactPhone">📞 1900 888 999</p><p id="contactEmail">✉️ info@gec.edu.vn</p></div>
-    <div class="contact-form glass-card" style="padding:30px;"><form id="contactForm">
-      <input type="text" id="name" placeholder="Họ tên" required><input type="tel" id="phone" placeholder="SĐT" required>
-      <input type="email" id="email" placeholder="Email"><select id="course"><option>Khóa học</option><option>IELTS</option><option>TOEIC</option><option>Giao tiếp</option><option>Trẻ em</option></select>
-      <textarea id="message" placeholder="Nội dung"></textarea><button type="submit" class="btn" style="width:100%">Nhận tư vấn</button>
-    </form></div>
-  </div></div></section>
-  <footer>
-    <p>© 2025 GEC English Center.</p>
-  </footer>
+  <!-- Testimonials -->
+  <section id="testimonials">
+    <div class="container">
+      <div class="section-title" data-aos="fade-up"><h2>Học viên nói gì</h2></div>
+      <div class="testimonials-grid">
+        <div class="glass-card testimonial-card" data-aos="fade-up"><p>"Nhờ GEC mình đạt 7.5 IELTS ngay lần đầu. Giáo viên cực kỳ tận tâm!"</p><div class="testimonial-author"><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop&crop=face" alt="Minh" loading="lazy"><strong>Nguyễn Minh</strong></div></div>
+        <div class="glass-card testimonial-card" data-aos="fade-up" data-aos-delay="150"><p>"Con tôi tự tin giao tiếp hơn hẳn sau 3 tháng. Rất biết ơn GEC!"</p><div class="testimonial-author"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&h=60&fit=crop&crop=face" alt="Chị Hương" loading="lazy"><strong>Chị Thu Hương</strong></div></div>
+        <div class="glass-card testimonial-card" data-aos="fade-up" data-aos-delay="300"><p>"Môi trường học năng động, mình đã tự tin làm việc ở công ty nước ngoài."</p><div class="testimonial-author"><img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop&crop=face" alt="Tuấn" loading="lazy"><strong>Lê Anh Tuấn</strong></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Blog -->
+  <section id="blog"><div class="container"><div class="section-title" data-aos="fade-up"><h2>Tin tức & Bài viết</h2></div><div id="blogList" class="courses-grid"></div></div></section>
+
+  <!-- Contact -->
+  <section id="contact">
+    <div class="container">
+      <div class="section-title" data-aos="fade-up"><h2>Liên hệ</h2></div>
+      <div class="contact-grid">
+        <div class="glass-card" style="padding:30px;" data-aos="fade-right"><h3>Thông tin</h3><p id="contactAddress">📍 123 Nguyễn Huệ, Q.1</p><p id="contactPhone">📞 1900 888 999</p><p id="contactEmail">✉️ info@gec.edu.vn</p></div>
+        <div class="contact-form glass-card" style="padding:30px;" data-aos="fade-left"><form id="contactForm">
+          <input type="text" id="name" placeholder="Họ tên" required><input type="tel" id="phone" placeholder="SĐT" required>
+          <input type="email" id="email" placeholder="Email"><select id="course"><option>Khóa học</option><option>IELTS</option><option>TOEIC</option><option>Giao tiếp</option><option>Trẻ em</option></select>
+          <textarea id="message" placeholder="Nội dung"></textarea><button type="submit" class="btn" style="width:100%">Nhận tư vấn</button>
+        </form></div>
+      </div>
+    </div>
+  </section>
+  <footer><p>© 2025 GEC English Center.</p></footer>
 </div>
 
 <!-- ADMIN PANEL -->
@@ -253,7 +331,7 @@
       </div>
       <div class="admin-card">
         <h3>🤖 Quản lý kịch bản Chatbot</h3>
-        <p style="font-size:0.85rem; opacity:0.8;">Thiết lập câu trả lời tự động dựa trên từ khóa. Chatbot sẽ trả lời theo đúng kịch bản.</p>
+        <p style="font-size:0.85rem; opacity:0.8;">Thiết lập câu trả lời tự động dựa trên từ khóa.</p>
         <label>Từ khóa (phân cách bằng dấu phẩy)</label>
         <input type="text" id="scriptKeywords" placeholder="khóa học, học phí, ielts...">
         <label>Câu trả lời</label>
@@ -334,14 +412,17 @@
   const DEFAULT_CONFIG = {
     slogan: "GEC – Chắp cánh tương lai bằng tiếng Anh",
     heroDesc: "Khơi mở tiềm năng, chinh phục tiếng Anh cùng đội ngũ giáo viên xuất sắc và lộ trình cá nhân hóa.",
-    aboutText: "Thành lập từ 2015, hơn 10.000 học viên thành công.",
+    aboutText: "Thành lập từ 2015, GEC tự hào là trung tâm tiếng Anh hàng đầu với hơn 10.000 học viên đã đạt chứng chỉ quốc tế.",
     years: "8+",
     teachers: "200+",
     students: "10K+",
     address: "123 Nguyễn Huệ, Q.1",
     phone: "1900 888 999",
     email: "info@gec.edu.vn",
-    posts: [],
+    posts: [
+      { title: "Khai giảng khóa IELTS tháng 6", content: "GEC chính thức khai giảng khóa IELTS cấp tốc...", image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600", date: "01/06/2025" },
+      { title: "Học viên đạt 8.0 IELTS", content: "Chúc mừng bạn Nguyễn Minh đã đạt 8.0 IELTS...", image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600", date: "25/05/2025" }
+    ],
     botScripts: [
       { keywords: ["khóa học", "học phí", "ielts", "toeic", "giao tiếp", "trẻ em"], response: "GEC có các khóa học: IELTS (cam kết 6.5+), TOEIC (mục tiêu 700+), Tiếng Anh giao tiếp, Tiếng Anh trẻ em (4-12 tuổi). Học phí từ 3-8 triệu/tháng tùy khóa." },
       { keywords: ["giáo viên", "thầy cô"], response: "GEC có đội ngũ 200+ giáo viên giàu kinh nghiệm, bao gồm cả giáo viên bản ngữ và Việt Nam. Tiêu biểu: thầy John Smith (IELTS 8.5), cô Nguyễn Linh (Thạc sĩ Ngôn ngữ Anh)." },
@@ -356,12 +437,8 @@
 
   let currentConfig = { ...DEFAULT_CONFIG };
 
-  function getGithubToken() {
-    return localStorage.getItem('gec_github_token') || '';
-  }
-  function setGithubToken(token) {
-    localStorage.setItem('gec_github_token', token);
-  }
+  function getGithubToken() { return localStorage.getItem('gec_github_token') || ''; }
+  function setGithubToken(token) { localStorage.setItem('gec_github_token', token); }
 
   async function loadConfigFromGist() {
     try {
@@ -403,48 +480,23 @@
     if (!token) throw new Error('Chưa có GitHub Token');
     const res = await fetch(GIST_API_URL, {
       method: 'PATCH',
-      headers: {
-        'Authorization': `token ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        files: {
-          'config.json': {
-            content: JSON.stringify(currentConfig, null, 2)
-          }
-        }
-      })
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: { 'config.json': { content: JSON.stringify(currentConfig, null, 2) } } })
     });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || 'Lỗi cập nhật Gist');
-    }
+    if (!res.ok) { const err = await res.json(); throw new Error(err.message || 'Lỗi cập nhật Gist'); }
     return true;
   }
 
-  // ===== CHATBOT THÔNG MINH (KHÔNG CẦN API) =====
-  function findBestResponse(userMessage) {
-    const msg = userMessage.toLowerCase();
-    let bestMatch = null;
-    let bestScore = 0;
-
-    for (const script of window.botScripts) {
+  // ===== CHATBOT =====
+  function findBestResponse(msg) {
+    const lower = msg.toLowerCase();
+    let best = null, bestScore = 0;
+    for (const s of window.botScripts) {
       let score = 0;
-      for (const keyword of script.keywords) {
-        if (msg.includes(keyword.toLowerCase())) {
-          score += keyword.length;
-        }
-      }
-      if (score > bestScore) {
-        bestScore = score;
-        bestMatch = script;
-      }
+      for (const k of s.keywords) { if (lower.includes(k.toLowerCase())) score += k.length; }
+      if (score > bestScore) { bestScore = score; best = s; }
     }
-
-    if (bestMatch && bestScore > 0) {
-      return bestMatch.response;
-    }
-    return null;
+    return best && bestScore > 0 ? best.response : null;
   }
 
   function sendChat() {
@@ -453,19 +505,13 @@
     if (!msg) return;
     appendMessage('user', msg);
     input.value = '';
-
     const response = findBestResponse(msg);
-    if (response) {
-      setTimeout(() => appendMessage('bot', response), 500);
-    } else {
-      setTimeout(() => appendMessage('bot', window.fallbackMessage || 'Tôi là AI của GEC nên chỉ có thể tư vấn cho bạn những thứ liên quan tới GEC.'), 500);
-    }
+    setTimeout(() => appendMessage('bot', response || window.fallbackMessage), 500);
   }
 
   function appendMessage(role, text) {
     const div = document.createElement('div');
-    div.className = `msg ${role}`;
-    div.textContent = text;
+    div.className = `msg ${role}`; div.textContent = text;
     document.getElementById('chatMessages').appendChild(div);
     div.scrollIntoView({ behavior: 'smooth' });
   }
@@ -479,9 +525,7 @@
       loadAdminData();
     } else alert('Sai mật khẩu');
   }
-
   function logout() { sessionStorage.removeItem('admin_logged'); window.location.hash = '#'; location.reload(); }
-
   function loadAdminData() {
     document.getElementById('editSlogan').value = currentConfig.slogan || '';
     document.getElementById('editHeroDesc').value = currentConfig.heroDesc || '';
@@ -493,35 +537,25 @@
     document.getElementById('editPhone').value = currentConfig.phone || '';
     document.getElementById('editEmail').value = currentConfig.email || '';
     document.getElementById('welcomeMessage').value = currentConfig.welcomeMessage || '';
-    document.getElementById('fallbackMessage').value = currentConfig.fallbackMessage || 'Tôi là AI của GEC nên chỉ có thể tư vấn cho bạn những thứ liên quan tới GEC.';
+    document.getElementById('fallbackMessage').value = currentConfig.fallbackMessage || '';
     document.getElementById('telegramToken').value = currentConfig.telegramConfig?.token || '';
     document.getElementById('telegramChatId').value = currentConfig.telegramConfig?.chatId || '';
     document.getElementById('githubToken').value = getGithubToken();
-    
     const scripts = currentConfig.botScripts || [];
     document.getElementById('scriptList').innerHTML = scripts.map((s, i) => `
-      <div class="script-item">
-        <div>
-          <strong>Câu ${i + 1}:</strong> ${s.response.substring(0, 80)}...
-          <div class="keywords">Từ khóa: ${s.keywords.join(', ')}</div>
-        </div>
-        <button class="btn" onclick="deleteScript(${i})" style="padding:4px 12px;">Xóa</button>
-      </div>
+      <div class="script-item"><div><strong>Câu ${i + 1}:</strong> ${s.response.substring(0, 80)}...<div class="keywords">Từ khóa: ${s.keywords.join(', ')}</div></div>
+      <button class="btn" onclick="deleteScript(${i})" style="padding:4px 12px;">Xóa</button></div>
     `).join('');
-
     const posts = currentConfig.posts || [];
     document.getElementById('postList').innerHTML = posts.map((p, i) => `
-      <div style="margin:8px 0; background:rgba(255,255,255,0.1); padding:8px; border-radius:12px;">
-        <strong>${p.title}</strong>
-        <button class="btn" onclick="deletePost(${i})" style="padding:4px 12px;">Xóa</button>
-      </div>
+      <div style="margin:8px 0; background:rgba(255,255,255,0.1); padding:8px; border-radius:12px;"><strong>${p.title}</strong>
+      <button class="btn" onclick="deletePost(${i})" style="padding:4px 12px;">Xóa</button></div>
     `).join('');
   }
-
   function addScript() {
     const keywords = document.getElementById('scriptKeywords').value.split(',').map(k => k.trim().toLowerCase()).filter(k => k);
     const response = document.getElementById('scriptResponse').value.trim();
-    if (keywords.length === 0 || !response) return alert('Nhập đầy đủ từ khóa và câu trả lời');
+    if (keywords.length === 0 || !response) return alert('Nhập đầy đủ');
     if (!currentConfig.botScripts) currentConfig.botScripts = [];
     currentConfig.botScripts.push({ keywords, response });
     window.botScripts = currentConfig.botScripts;
@@ -530,44 +564,26 @@
     loadAdminData();
     alert('Đã thêm kịch bản!');
   }
-
-  function deleteScript(index) {
-    currentConfig.botScripts.splice(index, 1);
-    window.botScripts = currentConfig.botScripts;
-    loadAdminData();
-    alert('Đã xóa kịch bản!');
-  }
-
+  function deleteScript(index) { currentConfig.botScripts.splice(index, 1); window.botScripts = currentConfig.botScripts; loadAdminData(); }
   function saveBotSettings() {
     currentConfig.welcomeMessage = document.getElementById('welcomeMessage').value.trim();
     currentConfig.fallbackMessage = document.getElementById('fallbackMessage').value.trim();
     window.welcomeMessage = currentConfig.welcomeMessage;
     window.fallbackMessage = currentConfig.fallbackMessage;
-    alert('Đã lưu cài đặt Chatbot!');
+    alert('Đã lưu!');
   }
-
   async function saveGistConfig() {
     const token = document.getElementById('githubToken').value.trim();
-    if (!token) return alert('Vui lòng nhập GitHub Token');
+    if (!token) return alert('Nhập GitHub Token');
     setGithubToken(token);
-    try {
-      await loadConfigFromGist();
-      loadAdminData();
-      alert('Đã lưu token và tải cấu hình từ Gist!');
-    } catch (e) {
-      alert('Lỗi: ' + e.message);
-    }
+    await loadConfigFromGist();
+    loadAdminData();
+    alert('Đã lưu token và tải cấu hình từ Gist!');
   }
-
   async function pushAllToGist() {
-    try {
-      await pushConfigToGist();
-      alert('Đã đẩy toàn bộ dữ liệu lên Gist thành công!');
-    } catch (e) {
-      alert('Lỗi: ' + e.message + '\nVui lòng kiểm tra GitHub Token.');
-    }
+    try { await pushConfigToGist(); alert('Đã đẩy lên Gist!'); }
+    catch (e) { alert('Lỗi: ' + e.message); }
   }
-
   async function saveSiteContent() {
     currentConfig.slogan = document.getElementById('editSlogan').value;
     currentConfig.heroDesc = document.getElementById('editHeroDesc').value;
@@ -579,9 +595,8 @@
     currentConfig.phone = document.getElementById('editPhone').value;
     currentConfig.email = document.getElementById('editEmail').value;
     applyConfig(currentConfig);
-    alert('Đã lưu thay đổi! (Nhấn "Đẩy dữ liệu lên Gist" để đồng bộ)');
+    alert('Đã lưu! (Nhấn "Đẩy dữ liệu lên Gist" để đồng bộ)');
   }
-
   async function savePost() {
     const title = document.getElementById('postTitle').value.trim();
     const content = document.getElementById('postContent').value.trim();
@@ -594,32 +609,21 @@
     document.getElementById('postContent').value = '';
     document.getElementById('postImage').value = '';
     loadAdminData();
-    alert('Đã thêm bài viết! (Nhấn "Đẩy dữ liệu lên Gist" để đồng bộ)');
+    alert('Đã thêm bài viết!');
   }
-
-  async function deletePost(index) {
-    currentConfig.posts.splice(index, 1);
-    applyConfig(currentConfig);
-    loadAdminData();
-    alert('Đã xóa bài viết!');
-  }
-
+  function deletePost(index) { currentConfig.posts.splice(index, 1); applyConfig(currentConfig); loadAdminData(); }
   async function saveTelegramConfig() {
-    currentConfig.telegramConfig = {
-      token: document.getElementById('telegramToken').value.trim(),
-      chatId: document.getElementById('telegramChatId').value.trim()
-    };
+    currentConfig.telegramConfig = { token: document.getElementById('telegramToken').value.trim(), chatId: document.getElementById('telegramChatId').value.trim() };
     window.telegramConfig = currentConfig.telegramConfig;
-    alert('Đã lưu cấu hình Telegram!');
+    alert('Đã lưu!');
   }
-
   function changePassword() {
     const newPass = document.getElementById('newAdminPassword').value.trim();
-    if (!newPass) return alert('Vui lòng nhập mật khẩu mới');
+    if (!newPass) return alert('Nhập mật khẩu mới');
     currentConfig.adminPassword = newPass;
     window.ADMIN_PASSWORD = newPass;
     document.getElementById('newAdminPassword').value = '';
-    alert('Đã đổi mật khẩu! (Nhấn "Đẩy dữ liệu lên Gist" để đồng bộ)');
+    alert('Đã đổi mật khẩu!');
   }
 
   // ===== KÉO THẢ CHATBOT =====
@@ -627,7 +631,6 @@
   const chatWindow = document.getElementById('chatbotWindow');
   const chatHeader = document.getElementById('chatbotHeader');
   let isDraggingToggle = false, toggleStartX, toggleStartY, toggleStartLeft, toggleStartTop;
-  let isDraggingWindow = false, winStartX, winStartY, winStartLeft, winStartTop;
   const DRAG_THRESHOLD = 5;
 
   function setDefaultTogglePosition() {
@@ -642,7 +645,6 @@
       chatWindow.style.top = Math.max(0, window.innerHeight - 540) + 'px';
     }
   }
-
   function startDragToggle(e) {
     e.preventDefault();
     isDraggingToggle = true;
@@ -657,7 +659,6 @@
     document.addEventListener('touchmove', onDragToggle, { passive: false });
     document.addEventListener('touchend', stopDragToggle);
   }
-
   function onDragToggle(e) {
     if (!isDraggingToggle) return;
     e.preventDefault();
@@ -671,7 +672,6 @@
     chatToggle.style.left = newLeft + 'px';
     chatToggle.style.top = newTop + 'px';
   }
-
   function stopDragToggle(e) {
     if (!isDraggingToggle) return;
     const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
@@ -685,18 +685,15 @@
     document.removeEventListener('touchend', stopDragToggle);
     if (distance < DRAG_THRESHOLD) toggleChatbot();
   }
-
   chatToggle.addEventListener('mousedown', startDragToggle);
   chatToggle.addEventListener('touchstart', startDragToggle, { passive: false });
-  chatHeader.addEventListener('mousedown', startDragWindow);
-  chatHeader.addEventListener('touchstart', startDragWindow, { passive: false });
 
   let welcomeShown = false;
   function toggleChatbot() {
     if (!chatWindow.classList.contains('open')) setDefaultWindowPosition();
     chatWindow.classList.toggle('open');
     if (chatWindow.classList.contains('open') && !welcomeShown) {
-      appendMessage('bot', window.welcomeMessage || 'Xin chào! Tôi có thể giúp gì cho bạn?');
+      appendMessage('bot', window.welcomeMessage || 'Xin chào!');
       welcomeShown = true;
     }
   }
@@ -706,24 +703,15 @@
     const cfg = window.telegramConfig;
     if (!cfg?.token || !cfg?.chatId) return;
     const text = `📢 ĐĂNG KÝ TƯ VẤN MỚI\n\n👤 Họ tên: ${name}\n📞 SĐT: ${phone}\n📧 Email: ${email || 'Không có'}\n📚 Khóa học: ${course || 'Chưa chọn'}\n💬 Nội dung: ${message || 'Không có'}`;
-    try {
-      await fetch(`https://api.telegram.org/bot${cfg.token}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: cfg.chatId, text })
-      });
-    } catch (e) { console.warn('Gửi Telegram thất bại:', e); }
+    try { await fetch(`https://api.telegram.org/bot${cfg.token}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: cfg.chatId, text }) }); }
+    catch (e) { console.warn('Gửi Telegram thất bại:', e); }
   }
-
   document.getElementById('contactForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = document.getElementById('name').value.trim();
     const phone = document.getElementById('phone').value.trim();
     if (!name || !phone) return alert('Điền đầy đủ họ tên và SĐT');
-    const email = document.getElementById('email').value.trim();
-    const course = document.getElementById('course').value;
-    const message = document.getElementById('message').value.trim();
-    await sendTelegramNotification(name, phone, email, course, message);
+    await sendTelegramNotification(name, phone, document.getElementById('email').value.trim(), document.getElementById('course').value, document.getElementById('message').value.trim());
     alert('GEC đã nhận được thông tin của bạn!');
     document.getElementById('contactForm').reset();
   });
@@ -744,7 +732,6 @@
     }
   }
   window.addEventListener('hashchange', checkAdminHash);
-
   window.addEventListener('load', async () => {
     AOS.init({ duration: 750, once: true, offset: 80 });
     await loadConfigFromGist();
@@ -752,23 +739,10 @@
     setDefaultTogglePosition();
   });
 
-  function scrollToContact(course) {
-    document.getElementById('course').value = course;
-    document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
-  }
-
-  document.getElementById('menuToggle').addEventListener('click', () => {
-    document.getElementById('menuToggle').classList.toggle('active');
-    document.getElementById('navMenu').classList.toggle('active');
-  });
-  document.querySelectorAll('#navMenu a').forEach(l => l.addEventListener('click', () => {
-    document.getElementById('menuToggle').classList.remove('active');
-    document.getElementById('navMenu').classList.remove('active');
-  }));
-
-  document.getElementById('chatInput').addEventListener('keypress', e => {
-    if (e.key === 'Enter') sendChat();
-  });
+  function scrollToContact(course) { document.getElementById('course').value = course; document.getElementById('contact').scrollIntoView({ behavior: 'smooth' }); }
+  document.getElementById('menuToggle').addEventListener('click', () => { document.getElementById('menuToggle').classList.toggle('active'); document.getElementById('navMenu').classList.toggle('active'); });
+  document.querySelectorAll('#navMenu a').forEach(l => l.addEventListener('click', () => { document.getElementById('menuToggle').classList.remove('active'); document.getElementById('navMenu').classList.remove('active'); }));
+  document.getElementById('chatInput').addEventListener('keypress', e => { if (e.key === 'Enter') sendChat(); });
 </script>
 </body>
 </html>
