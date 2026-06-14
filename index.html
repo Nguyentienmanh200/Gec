@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=yes">
+  <meta name="description" content="Trung tâm Anh ngữ GEC - Chắp cánh tương lai bằng tiếng Anh. Chatbot AI thông minh.">
+  <title>GEC | Trung tâm Tiếng Anh Kính Lỏng + Chatbot thông minh</title>
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0a1f5c;
+      --secondary: #f0b90b;
+      --glass-bg: rgba(255, 255, 255, 0.07);
+      --glass-border: rgba(255, 255, 255, 0.18);
+      --shadow: 0 15px 35px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      --radius: 24px;
+      --transition: 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+      --font: 'Segoe UI', 'Inter', system-ui, sans-serif;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; scroll-padding-top:100px; }
+    body {
+      font-family: var(--font);
+      background: #020617;
+      color: #fff;
+      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .animated-bg {
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background: radial-gradient(ellipse at 30% 20%, #0a1f4a 0%, #010417 70%);
+      z-index: -2;
+    }
+    .bg-glow {
+      position: fixed; border-radius:50%; filter:blur(120px); opacity:0.45; z-index:-1;
+      pointer-events: none; animation: floatGlow 12s infinite alternate ease-in-out;
+    }
+    .bg-glow.g1 { width:600px; height:600px; background:#2e4a9c; top:-250px; left:-150px; animation-duration:15s; }
+    .bg-glow.g2 { width:500px; height:500px; background:#e6a800; bottom:-250px; right:-120px; animation-duration:18s; animation-delay:2s; }
+    .bg-glow.g3 { width:400px; height:400px; background:#1e5abf; top:60%; left:50%; transform:translate(-50%,-50%); animation-duration:20s; }
+    @keyframes floatGlow { 0% { transform:translate(0,0) scale(1); } 100% { transform:translate(25px,-35px) scale(1.2); } }
+    .container { max-width:1100px; margin:0 auto; padding:0 20px; position:relative; z-index:2; }
+    header {
+      position: fixed; top:15px; left:50%; transform:translateX(-50%);
+      width: calc(100% - 32px); max-width:1080px;
+      background: rgba(8,18,48,0.5); backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border:1px solid var(--glass-border); border-radius:100px;
+      z-index:1000; padding:12px 24px; box-shadow:0 12px 30px rgba(0,0,0,0.4);
+    }
+    .header-inner { display:flex; align-items:center; justify-content:space-between; }
+    .logo {
+      font-size:1.7rem; font-weight:800; letter-spacing:-0.5px;
+      background: linear-gradient(to right, #ffffff, #f0b90b);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-decoration:none; display:flex; align-items:center; gap:6px;
+    }
+    .logo span { background:var(--secondary); color:#0a1120; padding:4px 12px; border-radius:40px; font-size:1.2rem; -webkit-text-fill-color:#0a1120; font-weight:700; }
+    nav ul { display:flex; list-style:none; gap:24px; align-items:center; }
+    nav ul li a {
+      color:rgba(255,255,255,0.85); text-decoration:none; font-weight:500; font-size:0.9rem;
+      position:relative; padding:6px 0; transition:0.3s; white-space:nowrap;
+    }
+    nav ul li a::after {
+      content:''; position:absolute; bottom:0; left:0; width:0; height:2px;
+      background:var(--secondary); box-shadow:0 0 8px var(--secondary); transition:0.3s; border-radius:4px;
+    }
+    nav ul li a:hover { color:white; text-shadow:0 0 8px rgba(255,255,255,0.6); }
+    nav ul li a:hover::after { width:100%; }
+    .menu-toggle { display:none; background:transparent; border:none; flex-direction:column; gap:5px; cursor:pointer; padding:8px; z-index:1001; }
+    .menu-toggle span { width:26px; height:3px; background:white; border-radius:3px; transition:0.3s; display:block; }
+    .menu-toggle.active span:nth-child(1) { transform:translateY(8px) rotate(45deg); }
+    .menu-toggle.active span:nth-child(2) { opacity:0; }
+    .menu-toggle.active span:nth-child(3) { transform:translateY(-8px) rotate(-45deg); }
+    .hero { min-height:100vh; display:flex; align-items:center; justify-content:center; padding-top:90px; }
+    .hero-content {
+      text-align:center; max-width:750px; width:100%;
+      background: var(--glass-bg); backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+      border:1px solid var(--glass-border); border-radius:32px; padding:50px 30px; box-shadow:var(--shadow);
+    }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight:900; margin-bottom:18px; background:linear-gradient(135deg,#fff 0%,#f5e07b 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .btn {
+      display:inline-block; padding:14px 34px; background:var(--secondary); color:#0a1120; font-weight:700;
+      font-size:0.95rem; border-radius:60px; text-decoration:none; border:none; cursor:pointer;
+      transition:var(--transition); box-shadow:0 8px 25px rgba(240,185,11,0.45);
+      backdrop-filter:blur(5px); border:1px solid rgba(255,255,255,0.3); touch-action:manipulation;
+    }
+    .btn:hover { background:#ffd966; transform:translateY(-4px); box-shadow:0 18px 38px rgba(240,185,11,0.65); }
+    .btn-outline { background:rgba(255,255,255,0.08); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.4); color:white; box-shadow:none; margin-left:12px; }
+    .btn-outline:hover { background:rgba(255,255,255,0.22); box-shadow:0 12px 30px rgba(255,255,255,0.2); }
+    section { padding:80px 0; }
+    .section-title { text-align:center; margin-bottom:55px; }
+    .section-title h2 { font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight:800; background:linear-gradient(180deg,#fff 0%,#b9c7dd 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; display:inline-block; margin-bottom:10px; }
+    .glass-card {
+      background: var(--glass-bg); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      border:1px solid var(--glass-border); border-radius:var(--radius); box-shadow:var(--shadow);
+      transition:var(--transition); overflow:hidden;
+    }
+    .glass-card:hover { transform:translateY(-6px); border-color:rgba(255,255,255,0.35); }
+    .courses-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:28px; }
+    .course-img { height:180px; background-size:cover; background-position:center; border-radius:24px 24px 0 0; }
+    .course-body { padding:22px 20px; }
+    .teachers-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:28px; }
+    .teacher-card { text-align:center; padding:28px 20px; }
+    .teacher-avatar { width:100px; height:100px; border-radius:50%; object-fit:cover; margin:0 auto 14px; border:3px solid rgba(255,255,255,0.4); }
+    .contact-grid { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:start; }
+    .contact-form input, .contact-form select, .contact-form textarea {
+      width:100%; padding:13px 18px; background:rgba(255,255,255,0.1); backdrop-filter:blur(12px);
+      border:1px solid rgba(255,255,255,0.25); border-radius:50px; color:white; font-size:0.95rem;
+      font-family:inherit; transition:var(--transition); outline:none; margin-bottom:16px;
+    }
+    .contact-form textarea { border-radius:20px; min-height:100px; resize:vertical; }
+    .contact-form input::placeholder, .contact-form textarea::placeholder { color:rgba(255,255,255,0.5); }
+    select option { background:#0a1f4a; color:white; }
+
+    /* Chatbot AI */
+    .chatbot-container { position: fixed; bottom: 24px; right: 24px; z-index: 2000; }
+    .chatbot-toggle {
+      width: 58px; height: 58px; border-radius: 50%; background: var(--secondary); color: #0a1120;
+      display: flex; align-items: center; justify-content: center; cursor: grab; font-size: 1.8rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.4);
+      transition: var(--transition); position: fixed; touch-action: none; user-select: none; -webkit-user-select: none;
+      z-index: 2001;
+    }
+    .chatbot-toggle:active { cursor: grabbing; }
+    .chatbot-window {
+      position: fixed; width: 360px; max-width: 90vw; height: 480px;
+      background: rgba(15,25,50,0.7); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+      border: 1px solid rgba(255,255,255,0.25); border-radius: 24px;
+      display: flex; flex-direction: column;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      overflow: hidden; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .chatbot-window.open { opacity: 1; pointer-events: auto; }
+    .chatbot-header {
+      padding: 16px; background: rgba(0,0,0,0.3); font-weight: 700;
+      display: flex; justify-content: space-between; align-items: center;
+      cursor: grab; user-select: none; -webkit-user-select: none; touch-action: none;
+    }
+    .chatbot-header:active { cursor: grabbing; }
+    .chatbot-header span:last-child { cursor: pointer; }
+    .chatbot-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .chatbot-messages .msg { padding: 10px 14px; border-radius: 18px; max-width: 85%; font-size: 0.9rem; line-height: 1.4; }
+    .msg.user { align-self: flex-end; background: var(--secondary); color: #0a1120; }
+    .msg.bot { align-self: flex-start; background: rgba(255,255,255,0.15); }
+    .chatbot-input { display: flex; padding: 12px; background: rgba(0,0,0,0.3); }
+    .chatbot-input input { flex: 1; padding: 10px 16px; border-radius: 40px; border: none; background: rgba(255,255,255,0.2); color: white; outline: none; }
+    .chatbot-input button { margin-left: 8px; background: var(--secondary); border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 1.2rem; cursor: pointer; }
+
+    /* Admin Panel */
+    #adminPanel { display:none; padding-top:100px; }
+    #adminPanel.active { display:block; }
+    .admin-card { background:rgba(20,30,60,0.6); backdrop-filter:blur(24px); border-radius:24px; padding:30px; border:1px solid rgba(255,255,255,0.2); margin-bottom:30px; }
+    .admin-card input, .admin-card textarea, .admin-card select { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.25); color:white; border-radius:16px; padding:12px 18px; width:100%; margin:8px 0; }
+    .admin-card button { margin:8px 4px; }
+    .admin-card label { display:block; margin-top:10px; font-weight:600; }
+    .script-item { background:rgba(255,255,255,0.05); padding:12px; border-radius:12px; margin:8px 0; display:flex; justify-content:space-between; align-items:center; }
+    .script-item .keywords { font-size:0.8rem; opacity:0.7; }
+
+    footer { text-align:center; padding:30px 20px; background:rgba(0,0,0,0.3); backdrop-filter:blur(10px); color:rgba(255,255,255,0.7); position:relative; }
+    .floating-buttons { display:none !important; }
+
+    @media (max-width:768px) {
+      header { top:10px; width:calc(100% - 20px); border-radius:50px; padding:10px 20px; }
+      .menu-toggle { display:flex; }
+      nav { position:fixed; top:0; right:-100%; width:270px; height:100vh; background:rgba(5,14,35,0.9); backdrop-filter:blur(35px); padding:110px 28px 30px; transition:0.45s; border-left:1px solid rgba(255,255,255,0.15); z-index:999; }
+      nav.active { right:0; }
+      nav ul { flex-direction:column; gap:26px; align-items:flex-start; }
+      .contact-grid, .about-grid { grid-template-columns:1fr; }
+      .hero-content { padding:40px 20px; }
+      .chatbot-window { width: 300px; height: 420px; }
+    }
+  </style>
+</head>
+<body>
+<div class="animated-bg"></div><div class="bg-glow g1"></div><div class="bg-glow g2"></div><div class="bg-glow g3"></div>
+
+<header id="header">
+  <div class="header-inner">
+    <a href="#" class="logo">✨ GEC<span>English</span></a>
+    <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+    <nav id="navMenu">
+      <ul>
+        <li><a href="#about">Giới thiệu</a></li>
+        <li><a href="#courses">Khóa học</a></li>
+        <li><a href="#teachers">Giáo viên</a></li>
+        <li><a href="#blog">Tin tức</a></li>
+        <li><a href="#contact">Liên hệ</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<!-- LANDING PAGE -->
+<div id="landingPage">
+  <section class="hero">
+    <div class="hero-content" data-aos="zoom-in-up">
+      <h1 id="slogan">GEC – Chắp cánh tương lai bằng tiếng Anh</h1>
+      <p id="heroDesc">Khơi mở tiềm năng, chinh phục tiếng Anh cùng đội ngũ giáo viên xuất sắc và lộ trình cá nhân hóa.</p>
+      <div><a href="#courses" class="btn">Khám phá khóa học</a> <a href="#contact" class="btn btn-outline">Nhận tư vấn</a></div>
+    </div>
+  </section>
+
+  <section id="about"><div class="container"><div class="about-grid"><div data-aos="fade-right"><img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&q=80" style="width:100%; border-radius:32px;" alt="lớp học"></div><div class="glass-card" style="padding:30px;" data-aos="fade-left"><h3>Về GEC</h3><p id="aboutText">Thành lập từ 2015, hơn 10.000 học viên thành công.</p><div class="about-stats" style="display:flex; gap:30px; margin-top:20px;"><div><span class="stat-number" id="statYears" style="font-size:2rem; font-weight:800; color:var(--secondary);">8+</span><br>Năm KN</div><div><span class="stat-number" id="statTeachers" style="font-size:2rem; font-weight:800; color:var(--secondary);">200+</span><br>Giáo viên</div><div><span class="stat-number" id="statStudents" style="font-size:2rem; font-weight:800; color:var(--secondary);">10K+</span><br>Học viên</div></div></div></div></div></section>
+
+  <section id="courses"><div class="container"><div class="section-title"><h2>Khóa học nổi bật</h2></div><div class="courses-grid">
+    <div class="glass-card"><div class="course-img" style="background-image:url(https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600)"></div><div class="course-body"><h3>IELTS</h3><p>Cam kết 6.5+</p><button class="btn" onclick="scrollToContact('IELTS')">Đăng ký</button></div></div>
+    <div class="glass-card"><div class="course-img" style="background-image:url(https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600)"></div><div class="course-body"><h3>TOEIC</h3><p>Mục tiêu 700+</p><button class="btn" onclick="scrollToContact('TOEIC')">Đăng ký</button></div></div>
+    <div class="glass-card"><div class="course-img" style="background-image:url(https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600)"></div><div class="course-body"><h3>Giao tiếp</h3><p>Phản xạ tự nhiên</p><button class="btn" onclick="scrollToContact('Tiếng Anh giao tiếp')">Đăng ký</button></div></div>
+    <div class="glass-card"><div class="course-img" style="background-image:url(https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=600)"></div><div class="course-body"><h3>Trẻ em</h3><p>4-12 tuổi</p><button class="btn" onclick="scrollToContact('Tiếng Anh trẻ em')">Đăng ký</button></div></div>
+  </div></div></section>
+
+  <section id="teachers"><div class="container"><div class="section-title"><h2>Đội ngũ giáo viên</h2></div><div class="teachers-grid">
+    <div class="glass-card teacher-card"><img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop" class="teacher-avatar"><h3>John Smith</h3><p>IELTS 8.5</p></div>
+    <div class="glass-card teacher-card"><img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop" class="teacher-avatar"><h3>Nguyễn Linh</h3><p>Thạc sĩ</p></div>
+  </div></div></section>
+
+  <section id="blog"><div class="container"><div class="section-title"><h2>Tin tức & Bài viết</h2></div><div id="blogList" class="courses-grid"></div></div></section>
+
+  <section id="contact"><div class="container"><div class="section-title"><h2>Liên hệ</h2></div><div class="contact-grid">
+    <div class="glass-card" style="padding:30px;"><h3>Thông tin</h3><p id="contactAddress">📍 123 Nguyễn Huệ, Q.1</p><p id="contactPhone">📞 1900 888 999</p><p id="contactEmail">✉️ info@gec.edu.vn</p></div>
+    <div class="contact-form glass-card" style="padding:30px;"><form id="contactForm">
+      <input type="text" id="name" placeholder="Họ tên" required><input type="tel" id="phone" placeholder="SĐT" required>
+      <input type="email" id="email" placeholder="Email"><select id="course"><option>Khóa học</option><option>IELTS</option><option>TOEIC</option><option>Giao tiếp</option><option>Trẻ em</option></select>
+      <textarea id="message" placeholder="Nội dung"></textarea><button type="submit" class="btn" style="width:100%">Nhận tư vấn</button>
+    </form></div>
+  </div></div></section>
+  <footer>
+    <p>© 2025 GEC English Center.</p>
+  </footer>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel">
+  <div class="container">
+    <div id="loginForm" class="admin-card" style="max-width:400px; margin:0 auto;">
+      <h3>Đăng nhập Admin</h3>
+      <input type="password" id="adminPassword" placeholder="Mật khẩu">
+      <button class="btn" onclick="login()">Đăng nhập</button>
+    </div>
+    <div id="adminContent" style="display:none;">
+      <div class="admin-card">
+        <h3>☁️ Cấu hình đồng bộ Gist</h3>
+        <p style="font-size:0.85rem; opacity:0.8;">Nhập GitHub Token để đồng bộ dữ liệu lên Gist của bạn.</p>
+        <label>GitHub Token (quyền gist)</label>
+        <input type="password" id="githubToken" placeholder="ghp_xxxx...">
+        <button class="btn" onclick="saveGistConfig()">Lưu token & tải lại từ Gist</button>
+        <button class="btn" onclick="pushAllToGist()" style="margin-left:4px;">📤 Đẩy dữ liệu lên Gist</button>
+        <div id="gistStatus" style="margin-top:8px; font-size:0.8rem;"></div>
+      </div>
+      <div class="admin-card">
+        <h3>🤖 Quản lý kịch bản Chatbot</h3>
+        <p style="font-size:0.85rem; opacity:0.8;">Thiết lập câu trả lời tự động dựa trên từ khóa. Chatbot sẽ trả lời theo đúng kịch bản.</p>
+        <label>Từ khóa (phân cách bằng dấu phẩy)</label>
+        <input type="text" id="scriptKeywords" placeholder="khóa học, học phí, ielts...">
+        <label>Câu trả lời</label>
+        <textarea id="scriptResponse" rows="3" placeholder="GEC có các khóa học..."></textarea>
+        <button class="btn" onclick="addScript()">➕ Thêm kịch bản</button>
+        <hr style="margin:16px 0; border-color:rgba(255,255,255,0.2);">
+        <div id="scriptList"></div>
+        <hr style="margin:16px 0; border-color:rgba(255,255,255,0.2);">
+        <label>Lời chào mặc định</label>
+        <input type="text" id="welcomeMessage" placeholder="Xin chào! Tôi có thể giúp gì cho bạn?">
+        <label>Câu trả lời khi ngoài lề</label>
+        <input type="text" id="fallbackMessage" placeholder="Tôi là AI của GEC nên chỉ có thể tư vấn cho bạn những thứ liên quan tới GEC.">
+        <button class="btn" onclick="saveBotSettings()">Lưu cài đặt Chatbot</button>
+      </div>
+      <div class="admin-card">
+        <h3>Quản lý bài viết</h3>
+        <input type="text" id="postTitle" placeholder="Tiêu đề">
+        <textarea id="postContent" placeholder="Nội dung"></textarea>
+        <input type="text" id="postImage" placeholder="URL ảnh">
+        <button class="btn" onclick="savePost()">Lưu bài</button>
+        <hr style="margin:16px 0; border-color:rgba(255,255,255,0.2);">
+        <div id="postList"></div>
+      </div>
+      <div class="admin-card">
+        <h3>Chỉnh sửa nội dung trang</h3>
+        <label>Slogan</label><input type="text" id="editSlogan">
+        <label>Mô tả hero</label><input type="text" id="editHeroDesc">
+        <label>About text</label><textarea id="editAboutText"></textarea>
+        <label>Số năm KN</label><input type="text" id="editYears">
+        <label>Số giáo viên</label><input type="text" id="editTeachers">
+        <label>Số học viên</label><input type="text" id="editStudents">
+        <label>Địa chỉ</label><input type="text" id="editAddress">
+        <label>SĐT</label><input type="text" id="editPhone">
+        <label>Email</label><input type="text" id="editEmail">
+        <button class="btn" onclick="saveSiteContent()">Lưu thay đổi</button>
+      </div>
+      <div class="admin-card">
+        <h3>📢 Cấu hình Telegram Bot</h3>
+        <label>Bot Token</label>
+        <input type="text" id="telegramToken" placeholder="123456:ABC-DEF...">
+        <label>Chat ID</label>
+        <input type="text" id="telegramChatId" placeholder="-1001234567890">
+        <button class="btn" onclick="saveTelegramConfig()">Lưu Telegram</button>
+      </div>
+      <div class="admin-card">
+        <h3>🔐 Đổi mật khẩu Admin</h3>
+        <input type="password" id="newAdminPassword" placeholder="Nhập mật khẩu mới">
+        <button class="btn" onclick="changePassword()">Đổi mật khẩu</button>
+      </div>
+      <button class="btn" onclick="logout()">Đăng xuất</button>
+    </div>
+  </div>
+</div>
+
+<!-- Chatbot AI -->
+<div class="chatbot-container">
+  <div class="chatbot-toggle" id="chatbotToggle">💬</div>
+  <div class="chatbot-window" id="chatbotWindow">
+    <div class="chatbot-header" id="chatbotHeader">
+      <span>GEC Assistant</span>
+      <span onclick="toggleChatbot()" style="cursor:pointer;">✕</span>
+    </div>
+    <div class="chatbot-messages" id="chatMessages"></div>
+    <div class="chatbot-input">
+      <input type="text" id="chatInput" placeholder="Hỏi về khóa học...">
+      <button onclick="sendChat()">➤</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+  // ===== CẤU HÌNH GIST =====
+  const GIST_ID = 'dc813ae4bf875e7c686c1283062e27bd';
+  const GIST_RAW_URL = `https://gist.githubusercontent.com/Nguyentienmanh200/${GIST_ID}/raw/config.json`;
+  const GIST_API_URL = `https://api.github.com/gists/${GIST_ID}`;
+
+  const DEFAULT_CONFIG = {
+    slogan: "GEC – Chắp cánh tương lai bằng tiếng Anh",
+    heroDesc: "Khơi mở tiềm năng, chinh phục tiếng Anh cùng đội ngũ giáo viên xuất sắc và lộ trình cá nhân hóa.",
+    aboutText: "Thành lập từ 2015, hơn 10.000 học viên thành công.",
+    years: "8+",
+    teachers: "200+",
+    students: "10K+",
+    address: "123 Nguyễn Huệ, Q.1",
+    phone: "1900 888 999",
+    email: "info@gec.edu.vn",
+    posts: [],
+    botScripts: [
+      { keywords: ["khóa học", "học phí", "ielts", "toeic", "giao tiếp", "trẻ em"], response: "GEC có các khóa học: IELTS (cam kết 6.5+), TOEIC (mục tiêu 700+), Tiếng Anh giao tiếp, Tiếng Anh trẻ em (4-12 tuổi). Học phí từ 3-8 triệu/tháng tùy khóa." },
+      { keywords: ["giáo viên", "thầy cô"], response: "GEC có đội ngũ 200+ giáo viên giàu kinh nghiệm, bao gồm cả giáo viên bản ngữ và Việt Nam. Tiêu biểu: thầy John Smith (IELTS 8.5), cô Nguyễn Linh (Thạc sĩ Ngôn ngữ Anh)." },
+      { keywords: ["địa chỉ", "liên hệ", "số điện thoại"], response: "GEC tọa lạc tại 123 Nguyễn Huệ, Quận 1, TP.HCM. Hotline: 1900 888 999. Email: info@gec.edu.vn" },
+      { keywords: ["đăng ký", "tư vấn"], response: "Bạn có thể đăng ký tư vấn miễn phí bằng cách điền form Liên hệ trên website. Đội ngũ GEC sẽ gọi lại trong 15 phút!" }
+    ],
+    welcomeMessage: "Xin chào! Tôi là trợ lý ảo GEC. Bạn cần tư vấn về khóa học, học phí hay địa chỉ?",
+    fallbackMessage: "Tôi là AI của GEC nên chỉ có thể tư vấn cho bạn những thứ liên quan tới GEC.",
+    telegramConfig: { token: "", chatId: "" },
+    adminPassword: "admin123"
+  };
+
+  let currentConfig = { ...DEFAULT_CONFIG };
+
+  function getGithubToken() {
+    return localStorage.getItem('gec_github_token') || '';
+  }
+  function setGithubToken(token) {
+    localStorage.setItem('gec_github_token', token);
+  }
+
+  async function loadConfigFromGist() {
+    try {
+      const res = await fetch(GIST_RAW_URL);
+      if (!res.ok) throw new Error('Không thể tải config từ Gist');
+      currentConfig = await res.json();
+    } catch (e) {
+      console.warn('Tải config từ Gist thất bại, dùng mặc định:', e);
+      currentConfig = { ...DEFAULT_CONFIG };
+    }
+    applyConfig(currentConfig);
+  }
+
+  function applyConfig(cfg) {
+    document.getElementById('slogan').textContent = cfg.slogan || '';
+    document.getElementById('heroDesc').textContent = cfg.heroDesc || '';
+    document.getElementById('aboutText').textContent = cfg.aboutText || '';
+    document.getElementById('statYears').textContent = cfg.years || '';
+    document.getElementById('statTeachers').textContent = cfg.teachers || '';
+    document.getElementById('statStudents').textContent = cfg.students || '';
+    document.getElementById('contactAddress').innerHTML = '📍 ' + (cfg.address || '');
+    document.getElementById('contactPhone').innerHTML = '📞 ' + (cfg.phone || '');
+    document.getElementById('contactEmail').innerHTML = '✉️ ' + (cfg.email || '');
+    if (cfg.posts) {
+      document.getElementById('blogList').innerHTML = cfg.posts.map(p => `
+        <div class="glass-card"><div class="course-img" style="background-image:url(${p.image || 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=600'})"></div>
+        <div class="course-body"><h3>${p.title}</h3><p>${p.content.substring(0,100)}...</p><small>${p.date}</small></div></div>
+      `).join('');
+    }
+    window.botScripts = cfg.botScripts || DEFAULT_CONFIG.botScripts;
+    window.welcomeMessage = cfg.welcomeMessage || DEFAULT_CONFIG.welcomeMessage;
+    window.fallbackMessage = cfg.fallbackMessage || DEFAULT_CONFIG.fallbackMessage;
+    window.ADMIN_PASSWORD = cfg.adminPassword || 'admin123';
+    window.telegramConfig = cfg.telegramConfig || { token: '', chatId: '' };
+  }
+
+  async function pushConfigToGist() {
+    const token = getGithubToken();
+    if (!token) throw new Error('Chưa có GitHub Token');
+    const res = await fetch(GIST_API_URL, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        files: {
+          'config.json': {
+            content: JSON.stringify(currentConfig, null, 2)
+          }
+        }
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Lỗi cập nhật Gist');
+    }
+    return true;
+  }
+
+  // ===== CHATBOT THÔNG MINH (KHÔNG CẦN API) =====
+  function findBestResponse(userMessage) {
+    const msg = userMessage.toLowerCase();
+    let bestMatch = null;
+    let bestScore = 0;
+
+    for (const script of window.botScripts) {
+      let score = 0;
+      for (const keyword of script.keywords) {
+        if (msg.includes(keyword.toLowerCase())) {
+          score += keyword.length;
+        }
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = script;
+      }
+    }
+
+    if (bestMatch && bestScore > 0) {
+      return bestMatch.response;
+    }
+    return null;
+  }
+
+  function sendChat() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+    appendMessage('user', msg);
+    input.value = '';
+
+    const response = findBestResponse(msg);
+    if (response) {
+      setTimeout(() => appendMessage('bot', response), 500);
+    } else {
+      setTimeout(() => appendMessage('bot', window.fallbackMessage || 'Tôi là AI của GEC nên chỉ có thể tư vấn cho bạn những thứ liên quan tới GEC.'), 500);
+    }
+  }
+
+  function appendMessage(role, text) {
+    const div = document.createElement('div');
+    div.className = `msg ${role}`;
+    div.textContent = text;
+    document.getElementById('chatMessages').appendChild(div);
+    div.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // ===== ADMIN =====
+  function login() {
+    if (document.getElementById('adminPassword').value === window.ADMIN_PASSWORD) {
+      sessionStorage.setItem('admin_logged', 'true');
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('adminContent').style.display = 'block';
+      loadAdminData();
+    } else alert('Sai mật khẩu');
+  }
+
+  function logout() { sessionStorage.removeItem('admin_logged'); window.location.hash = '#'; location.reload(); }
+
+  function loadAdminData() {
+    document.getElementById('editSlogan').value = currentConfig.slogan || '';
+    document.getElementById('editHeroDesc').value = currentConfig.heroDesc || '';
+    document.getElementById('editAboutText').value = currentConfig.aboutText || '';
+    document.getElementById('editYears').value = currentConfig.years || '';
+    document.getElementById('editTeachers').value = currentConfig.teachers || '';
+    document.getElementById('editStudents').value = currentConfig.students || '';
+    document.getElementById('editAddress').value = currentConfig.address || '';
+    document.getElementById('editPhone').value = currentConfig.phone || '';
+    document.getElementById('editEmail').value = currentConfig.email || '';
+    document.getElementById('welcomeMessage').value = currentConfig.welcomeMessage || '';
+    document.getElementById('fallbackMessage').value = currentConfig.fallbackMessage || 'Tôi là AI của GEC nên chỉ có thể tư vấn cho bạn những thứ liên quan tới GEC.';
+    document.getElementById('telegramToken').value = currentConfig.telegramConfig?.token || '';
+    document.getElementById('telegramChatId').value = currentConfig.telegramConfig?.chatId || '';
+    document.getElementById('githubToken').value = getGithubToken();
+    
+    const scripts = currentConfig.botScripts || [];
+    document.getElementById('scriptList').innerHTML = scripts.map((s, i) => `
+      <div class="script-item">
+        <div>
+          <strong>Câu ${i + 1}:</strong> ${s.response.substring(0, 80)}...
+          <div class="keywords">Từ khóa: ${s.keywords.join(', ')}</div>
+        </div>
+        <button class="btn" onclick="deleteScript(${i})" style="padding:4px 12px;">Xóa</button>
+      </div>
+    `).join('');
+
+    const posts = currentConfig.posts || [];
+    document.getElementById('postList').innerHTML = posts.map((p, i) => `
+      <div style="margin:8px 0; background:rgba(255,255,255,0.1); padding:8px; border-radius:12px;">
+        <strong>${p.title}</strong>
+        <button class="btn" onclick="deletePost(${i})" style="padding:4px 12px;">Xóa</button>
+      </div>
+    `).join('');
+  }
+
+  function addScript() {
+    const keywords = document.getElementById('scriptKeywords').value.split(',').map(k => k.trim().toLowerCase()).filter(k => k);
+    const response = document.getElementById('scriptResponse').value.trim();
+    if (keywords.length === 0 || !response) return alert('Nhập đầy đủ từ khóa và câu trả lời');
+    if (!currentConfig.botScripts) currentConfig.botScripts = [];
+    currentConfig.botScripts.push({ keywords, response });
+    window.botScripts = currentConfig.botScripts;
+    document.getElementById('scriptKeywords').value = '';
+    document.getElementById('scriptResponse').value = '';
+    loadAdminData();
+    alert('Đã thêm kịch bản!');
+  }
+
+  function deleteScript(index) {
+    currentConfig.botScripts.splice(index, 1);
+    window.botScripts = currentConfig.botScripts;
+    loadAdminData();
+    alert('Đã xóa kịch bản!');
+  }
+
+  function saveBotSettings() {
+    currentConfig.welcomeMessage = document.getElementById('welcomeMessage').value.trim();
+    currentConfig.fallbackMessage = document.getElementById('fallbackMessage').value.trim();
+    window.welcomeMessage = currentConfig.welcomeMessage;
+    window.fallbackMessage = currentConfig.fallbackMessage;
+    alert('Đã lưu cài đặt Chatbot!');
+  }
+
+  async function saveGistConfig() {
+    const token = document.getElementById('githubToken').value.trim();
+    if (!token) return alert('Vui lòng nhập GitHub Token');
+    setGithubToken(token);
+    try {
+      await loadConfigFromGist();
+      loadAdminData();
+      alert('Đã lưu token và tải cấu hình từ Gist!');
+    } catch (e) {
+      alert('Lỗi: ' + e.message);
+    }
+  }
+
+  async function pushAllToGist() {
+    try {
+      await pushConfigToGist();
+      alert('Đã đẩy toàn bộ dữ liệu lên Gist thành công!');
+    } catch (e) {
+      alert('Lỗi: ' + e.message + '\nVui lòng kiểm tra GitHub Token.');
+    }
+  }
+
+  async function saveSiteContent() {
+    currentConfig.slogan = document.getElementById('editSlogan').value;
+    currentConfig.heroDesc = document.getElementById('editHeroDesc').value;
+    currentConfig.aboutText = document.getElementById('editAboutText').value;
+    currentConfig.years = document.getElementById('editYears').value;
+    currentConfig.teachers = document.getElementById('editTeachers').value;
+    currentConfig.students = document.getElementById('editStudents').value;
+    currentConfig.address = document.getElementById('editAddress').value;
+    currentConfig.phone = document.getElementById('editPhone').value;
+    currentConfig.email = document.getElementById('editEmail').value;
+    applyConfig(currentConfig);
+    alert('Đã lưu thay đổi! (Nhấn "Đẩy dữ liệu lên Gist" để đồng bộ)');
+  }
+
+  async function savePost() {
+    const title = document.getElementById('postTitle').value.trim();
+    const content = document.getElementById('postContent').value.trim();
+    const image = document.getElementById('postImage').value.trim();
+    if (!title || !content) return alert('Nhập đủ');
+    if (!currentConfig.posts) currentConfig.posts = [];
+    currentConfig.posts.push({ title, content, image, date: new Date().toLocaleDateString('vi-VN') });
+    applyConfig(currentConfig);
+    document.getElementById('postTitle').value = '';
+    document.getElementById('postContent').value = '';
+    document.getElementById('postImage').value = '';
+    loadAdminData();
+    alert('Đã thêm bài viết! (Nhấn "Đẩy dữ liệu lên Gist" để đồng bộ)');
+  }
+
+  async function deletePost(index) {
+    currentConfig.posts.splice(index, 1);
+    applyConfig(currentConfig);
+    loadAdminData();
+    alert('Đã xóa bài viết!');
+  }
+
+  async function saveTelegramConfig() {
+    currentConfig.telegramConfig = {
+      token: document.getElementById('telegramToken').value.trim(),
+      chatId: document.getElementById('telegramChatId').value.trim()
+    };
+    window.telegramConfig = currentConfig.telegramConfig;
+    alert('Đã lưu cấu hình Telegram!');
+  }
+
+  function changePassword() {
+    const newPass = document.getElementById('newAdminPassword').value.trim();
+    if (!newPass) return alert('Vui lòng nhập mật khẩu mới');
+    currentConfig.adminPassword = newPass;
+    window.ADMIN_PASSWORD = newPass;
+    document.getElementById('newAdminPassword').value = '';
+    alert('Đã đổi mật khẩu! (Nhấn "Đẩy dữ liệu lên Gist" để đồng bộ)');
+  }
+
+  // ===== KÉO THẢ CHATBOT =====
+  const chatToggle = document.getElementById('chatbotToggle');
+  const chatWindow = document.getElementById('chatbotWindow');
+  const chatHeader = document.getElementById('chatbotHeader');
+  let isDraggingToggle = false, toggleStartX, toggleStartY, toggleStartLeft, toggleStartTop;
+  let isDraggingWindow = false, winStartX, winStartY, winStartLeft, winStartTop;
+  const DRAG_THRESHOLD = 5;
+
+  function setDefaultTogglePosition() {
+    if (!chatToggle.style.left || !chatToggle.style.top) {
+      chatToggle.style.left = (window.innerWidth - 80) + 'px';
+      chatToggle.style.top = (window.innerHeight - 80) + 'px';
+    }
+  }
+  function setDefaultWindowPosition() {
+    if (!chatWindow.style.left || !chatWindow.style.top) {
+      chatWindow.style.left = Math.max(0, window.innerWidth - 380) + 'px';
+      chatWindow.style.top = Math.max(0, window.innerHeight - 540) + 'px';
+    }
+  }
+
+  function startDragToggle(e) {
+    e.preventDefault();
+    isDraggingToggle = true;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    toggleStartX = clientX; toggleStartY = clientY;
+    toggleStartLeft = parseInt(chatToggle.style.left, 10) || 0;
+    toggleStartTop = parseInt(chatToggle.style.top, 10) || 0;
+    chatToggle.style.transition = 'none';
+    document.addEventListener('mousemove', onDragToggle);
+    document.addEventListener('mouseup', stopDragToggle);
+    document.addEventListener('touchmove', onDragToggle, { passive: false });
+    document.addEventListener('touchend', stopDragToggle);
+  }
+
+  function onDragToggle(e) {
+    if (!isDraggingToggle) return;
+    e.preventDefault();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    let newLeft = toggleStartLeft + (clientX - toggleStartX);
+    let newTop = toggleStartTop + (clientY - toggleStartY);
+    const size = 58;
+    newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - size));
+    newTop = Math.max(0, Math.min(newTop, window.innerHeight - size));
+    chatToggle.style.left = newLeft + 'px';
+    chatToggle.style.top = newTop + 'px';
+  }
+
+  function stopDragToggle(e) {
+    if (!isDraggingToggle) return;
+    const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+    const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+    const distance = Math.sqrt((clientX - toggleStartX)**2 + (clientY - toggleStartY)**2);
+    isDraggingToggle = false;
+    chatToggle.style.transition = '';
+    document.removeEventListener('mousemove', onDragToggle);
+    document.removeEventListener('mouseup', stopDragToggle);
+    document.removeEventListener('touchmove', onDragToggle);
+    document.removeEventListener('touchend', stopDragToggle);
+    if (distance < DRAG_THRESHOLD) toggleChatbot();
+  }
+
+  chatToggle.addEventListener('mousedown', startDragToggle);
+  chatToggle.addEventListener('touchstart', startDragToggle, { passive: false });
+  chatHeader.addEventListener('mousedown', startDragWindow);
+  chatHeader.addEventListener('touchstart', startDragWindow, { passive: false });
+
+  let welcomeShown = false;
+  function toggleChatbot() {
+    if (!chatWindow.classList.contains('open')) setDefaultWindowPosition();
+    chatWindow.classList.toggle('open');
+    if (chatWindow.classList.contains('open') && !welcomeShown) {
+      appendMessage('bot', window.welcomeMessage || 'Xin chào! Tôi có thể giúp gì cho bạn?');
+      welcomeShown = true;
+    }
+  }
+
+  // ===== FORM LIÊN HỆ =====
+  async function sendTelegramNotification(name, phone, email, course, message) {
+    const cfg = window.telegramConfig;
+    if (!cfg?.token || !cfg?.chatId) return;
+    const text = `📢 ĐĂNG KÝ TƯ VẤN MỚI\n\n👤 Họ tên: ${name}\n📞 SĐT: ${phone}\n📧 Email: ${email || 'Không có'}\n📚 Khóa học: ${course || 'Chưa chọn'}\n💬 Nội dung: ${message || 'Không có'}`;
+    try {
+      await fetch(`https://api.telegram.org/bot${cfg.token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: cfg.chatId, text })
+      });
+    } catch (e) { console.warn('Gửi Telegram thất bại:', e); }
+  }
+
+  document.getElementById('contactForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('name').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    if (!name || !phone) return alert('Điền đầy đủ họ tên và SĐT');
+    const email = document.getElementById('email').value.trim();
+    const course = document.getElementById('course').value;
+    const message = document.getElementById('message').value.trim();
+    await sendTelegramNotification(name, phone, email, course, message);
+    alert('GEC đã nhận được thông tin của bạn!');
+    document.getElementById('contactForm').reset();
+  });
+
+  // ===== KHỞI ĐỘNG =====
+  function checkAdminHash() {
+    if (window.location.hash === '#admin') {
+      document.getElementById('landingPage').style.display = 'none';
+      document.getElementById('adminPanel').classList.add('active');
+      if (sessionStorage.getItem('admin_logged') === 'true') {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('adminContent').style.display = 'block';
+        loadAdminData();
+      }
+    } else {
+      document.getElementById('landingPage').style.display = 'block';
+      document.getElementById('adminPanel').classList.remove('active');
+    }
+  }
+  window.addEventListener('hashchange', checkAdminHash);
+
+  window.addEventListener('load', async () => {
+    AOS.init({ duration: 750, once: true, offset: 80 });
+    await loadConfigFromGist();
+    checkAdminHash();
+    setDefaultTogglePosition();
+  });
+
+  function scrollToContact(course) {
+    document.getElementById('course').value = course;
+    document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  document.getElementById('menuToggle').addEventListener('click', () => {
+    document.getElementById('menuToggle').classList.toggle('active');
+    document.getElementById('navMenu').classList.toggle('active');
+  });
+  document.querySelectorAll('#navMenu a').forEach(l => l.addEventListener('click', () => {
+    document.getElementById('menuToggle').classList.remove('active');
+    document.getElementById('navMenu').classList.remove('active');
+  }));
+
+  document.getElementById('chatInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') sendChat();
+  });
+</script>
+</body>
+</html>
